@@ -21,6 +21,13 @@ struct ProfileFormView: View {
     let profile: Profile?
     let onDismiss: () -> Void
 
+    /// `ProfilesPicker`, the only path to this view, is hidden while anything is
+    /// blocking — so reaching this screen already means a tag scan cleared the way.
+    /// This guards the case where blocking starts (a schedule triggers) while the
+    /// sheet is already open, rather than relying on it being torn down implicitly
+    /// when its presenting ancestor leaves the view tree.
+    private let lockGuardTimer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
+
     init(profile: Profile? = nil, profileManager: ProfileManager, onDismiss: @escaping () -> Void) {
         self.profile = profile
         self.profileManager = profileManager
@@ -158,6 +165,14 @@ struct ProfileFormView: View {
                     secondaryButton: .cancel()
                 )
             }
+        }
+        .onAppear { dismissIfBlocking() }
+        .onReceive(lockGuardTimer) { _ in dismissIfBlocking() }
+    }
+
+    private func dismissIfBlocking() {
+        if SharedStore.isAnythingBlocking {
+            onDismiss()
         }
     }
     

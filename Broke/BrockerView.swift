@@ -224,13 +224,19 @@ struct BrokerView: View {
         }
     }
     
+    /// Hidden, not just disabled, while anything is blocking — otherwise anyone with
+    /// a blank NFC tag could mint a new valid one on the spot, making the physical
+    /// tag requirement meaningless.
+    @ViewBuilder
     private var createTagButton: some View {
-        Button(action: {
-            showCreateTagAlert = true
-        }) {
-            Image(systemName: "plus")
+        if !isBlocked {
+            Button(action: {
+                showCreateTagAlert = true
+            }) {
+                Image(systemName: "plus")
+            }
+            .disabled(!NFCNDEFReaderSession.readingAvailable)
         }
-        .disabled(!NFCNDEFReaderSession.readingAvailable)
     }
 
     /// Debug builds only — a suspension is otherwise only clearable by waiting it out

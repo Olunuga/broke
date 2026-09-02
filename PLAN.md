@@ -281,9 +281,20 @@ made during the 30 minutes doesn't cancel the automatic re-block.
   the app-removal/passcode/accounts/date-time/Siri restrictions active, and gone once
   nothing is blocking. Turn on the web allowlist for a profile with one or two sites
   selected, block it, and confirm only those sites load.
-- [ ] Require a tag scan before any profile setting (schedules included) can be edited
+- [x] Editing any profile setting (schedules included) while blocking is active — this
 
-  or deleted while blocking is active — the arm/disarm model from phase 6.
+  was largely already true by construction: `ProfilesPicker`, the only path to
+  `ProfileFormView` → `ScheduleListView` → `ScheduleFormView`, only renders when
+  `!isBlocked` in `BrokerView`, and the only way to clear `isBlocked` while a schedule
+  is active is a tag scan. The remaining gap was a sheet already open when a schedule
+  triggers mid-edit: `ProfileFormView` now polls `SharedStore.isAnythingBlocking` every
+  5 seconds and on appear, dismissing itself immediately if blocking starts while
+  presented — explicit, rather than relying on the sheet being torn down implicitly
+  when `ProfilesPicker` leaves the view tree.
+- [x] The "+" create-tag button is hidden, not just disabled, while anything is
+
+  blocking. Left visible, it would let anyone with a blank NFC tag mint a new valid
+  one on the spot, making the physical-tag requirement meaningless.
 - [ ] Replace the fixed tag phrase (`Broke/BrockerView.swift:17`) with a random
 
   per-install secret. Store its hash in the Keychain and write the secret to the tag.
