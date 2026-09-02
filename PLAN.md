@@ -13,9 +13,13 @@ main app is not running. The app alone cannot do this.
 - **One `DeviceActivityName` per schedule**, with a daily repeating interval. The
 extension filters by weekday inside `intervalDidStart`. Activity count equals the
 number of schedules, which stays well below the `excessiveActivities` limit.
-- **A budget is a `DeviceActivityEvent`** on the same activity, with
-`threshold: DateComponents(minute: n)`. Thresholds reset at each interval start, so
-a daily interval gives a per-day budget.
+- **A budget means something different per mode.** For `.allow`, it caps usage inside
+the usable window — a `DeviceActivityEvent` on the schedule's own activity, with
+`threshold: DateComponents(minute: n)`, works directly since the event only needs to
+track usage during that same interval. For `.block`, it caps usage outside the blocked
+window instead — the block activity's own interval covers the wrong span for that, so
+it needs a second activity (or event) covering the rest of the day. Not yet designed
+in detail; see phase 5.
 - **An App Group carries state** between app and extension: profiles, active profile
 ID, and the suspension date.
 - **Each schedule owns its own named `ManagedSettingsStore`**, keyed by the
@@ -29,8 +33,8 @@ parameter — it only fires daily at a fixed start/end time-of-day — so the ex
 re-checks `weekdays`, `isEnabled`, and suspension on every callback and applies or
 clears the shield accordingly. This is also why a schedule's shield is applied
 immediately on save rather than waiting for the next boundary.
-- **The NFC tag writes a suspension date** of the next midnight. The extension reads
-it before it applies any shield.
+- **The NFC tag writes a 30-minute suspension deadline.** The extension and
+`ScheduleManager` both check it before applying any schedule's shield; see phase 6.
 
 ### Data model
 
@@ -69,9 +73,6 @@ current time falls inside `startTime`–`endTime`. `.block` blocks exactly while
 This is recomputed on every `intervalDidStart`/`intervalDidEnd` callback and applied
 immediately when a schedule is saved, so an `.allow` schedule blocks from the moment
 it exists, not only after its first boundary.
-
-Set `includesPastActivity: true` on the event. Without it a budget restarts if
-monitoring re-registers mid-window.
 
 ## Checklist
 
@@ -159,16 +160,30 @@ Window transitions work at the end of this phase.
 
 ### Phase 5 — budgets
 
-- [ ] Attach `DeviceActivityEvent(applications:categories:webDomains:threshold:includesPastActivity:)`
+- [x] Form copy is mode-aware: `.allow` reads "Limit use inside window"; `.block` reads
+
+  "Limit use outside window". Neither is enforced yet — the toggle and stepper persist
+  `budgetMinutes` on the schedule, but nothing reads it.
+- [ ] For `.allow`: attach `DeviceActivityEvent(applications:categories:webDomains:threshold:includesPastActivity:
+
+  true)` to the schedule's own activity — the window and the tracked usage cover the
+  same span, so one event suffices. Without `includesPastActivity: true` the budget
+  restarts if monitoring re-registers mid-window.
+- [ ] For `.block`: the blocked window and the tracked span don't match, so this needs
+
+  its own activity covering the rest of the day rather than reusing the block
+  activity's event. Not yet designed.
 - [ ] Handle `eventDidReachThreshold` by applying the shield
-- [ ] **you** Test the Wednesday-to-Saturday, 30-minute case
+- [ ] **you** Test the Wednesday-to-Saturday, 30-minute `.allow` case
 
 ### Phase 6 — NFC early unblock
 
 The home screen tracks two independent shield sources: the manual toggle
-(`appBlocker.isBlocking`) and any currently active schedule (`SharedStore.isAnyScheduleBlocking()`,
-refreshed on appear and on returning to the foreground). It shows blocked if either
-one is, and the block label says which action a tap will take.
+(`appBlocker.isBlocking`) and any currently active schedule
+(`SharedStore.activeBlockingScheduleNames()`, refreshed on appear and on returning to
+the foreground). It shows blocked if either one is, names which source is active
+("Blocked manually", "Blocked by schedule: <name>", or both), and the tap label says
+which action a tap will take.
 
 A tag scan while a schedule is the active blocker does not touch the manual toggle —
 it suspends every schedule for 30 minutes (`ScheduleManager.suspendActiveSchedules`),

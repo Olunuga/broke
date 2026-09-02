@@ -52,6 +52,26 @@ struct ScheduleFormView: View {
         return endTotal - startTotal
     }
 
+    /// `.allow` caps use inside its window, so the cap can't exceed the window itself.
+    /// `.block` caps use in the rest of the day, outside the blocked window.
+    private var budgetMaximumMinutes: Int {
+        switch mode {
+        case .allow: return max(durationMinutes, 1)
+        case .block: return max(24 * 60 - durationMinutes, 1)
+        }
+    }
+
+    private var budgetToggleLabel: String {
+        mode == .allow ? "Limit use inside window" : "Limit use outside window"
+    }
+
+    private var budgetFooter: String {
+        switch mode {
+        case .allow: return "Caps how much of the allowed window can be used per day."
+        case .block: return "Caps how much can be used per day outside the blocked window."
+        }
+    }
+
     private var validationError: String? {
         if weekdays.isEmpty {
             return "Pick at least one day."
@@ -108,10 +128,10 @@ struct ScheduleFormView: View {
                     DatePicker("End", selection: $endTime, displayedComponents: .hourAndMinute)
                 }
 
-                Section(header: Text("Daily Limit")) {
-                    Toggle("Limit time within the window", isOn: $hasBudget)
+                Section(header: Text("Daily Limit"), footer: Text(budgetFooter)) {
+                    Toggle(budgetToggleLabel, isOn: $hasBudget)
                     if hasBudget {
-                        Stepper("\(budgetMinutes) minutes", value: $budgetMinutes, in: 1...max(durationMinutes, 1), step: 5)
+                        Stepper("\(budgetMinutes) minutes", value: $budgetMinutes, in: 1...budgetMaximumMinutes, step: 5)
                     }
                 }
 

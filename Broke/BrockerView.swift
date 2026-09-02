@@ -22,7 +22,11 @@ struct BrokerView: View {
     @State private var showCreateTagAlert = false
     @State private var showWriteResultAlert = false
     @State private var nfcWriteSuccess = false
-    @State private var isScheduleBlocking = false
+    @State private var activeScheduleNames: [String] = []
+
+    private var isScheduleBlocking: Bool {
+        !activeScheduleNames.isEmpty
+    }
 
     /// The manual toggle and any active schedule are independent shield sources; the
     /// home screen shows blocked if either one is.
@@ -80,6 +84,14 @@ struct BrokerView: View {
     @ViewBuilder
     private func blockOrUnblockButton(geometry: GeometryProxy) -> some View {
         VStack(spacing: 8) {
+            if let blockSourceDescription {
+                Text(blockSourceDescription)
+                    .font(.caption2)
+                    .fontWeight(.semibold)
+                    .opacity(0.85)
+                    .transition(.scale)
+            }
+
             Text(blockButtonLabel)
                 .font(.caption)
                 .opacity(0.75)
@@ -102,15 +114,30 @@ struct BrokerView: View {
         .animation(.spring(), value: isBlocked)
     }
 
+    private var blockSourceDescription: String? {
+        switch (appBlocker.isBlocking, isScheduleBlocking) {
+        case (true, true):
+            return "Blocked manually, and by schedule: \(activeScheduleNames.joined(separator: ", "))"
+        case (true, false):
+            return "Blocked manually"
+        case (false, true):
+            return "Blocked by schedule: \(activeScheduleNames.joined(separator: ", "))"
+        case (false, false):
+            return nil
+        }
+    }
+
     private var blockButtonLabel: String {
         if isScheduleBlocking {
-            return "Tap to end this block early"
+            return appBlocker.isBlocking
+                ? "Tap to end the schedule early (manual block stays on)"
+                : "Tap to end this block early"
         }
         return appBlocker.isBlocking ? "Tap to unblock" : "Tap to block"
     }
 
     private func refreshScheduleBlockingState() {
-        isScheduleBlocking = SharedStore.isAnyScheduleBlocking()
+        activeScheduleNames = SharedStore.activeBlockingScheduleNames()
     }
 
     private func scanTag() {

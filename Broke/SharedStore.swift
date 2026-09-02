@@ -90,16 +90,22 @@ enum SharedStore {
         return Date() < suspendedUntil
     }
 
-    /// Whether any enabled, valid schedule wants its profile blocked right now.
-    /// Drives the home screen's blocked state alongside the manual toggle.
-    static func isAnyScheduleBlocking() -> Bool {
-        guard !isSuspended else { return false }
+    /// Names of every enabled, valid schedule that wants its profile blocked right
+    /// now. Empty means no schedule is currently blocking. Drives the home screen's
+    /// blocked state, and which source it names, alongside the manual toggle.
+    static func activeBlockingScheduleNames() -> [String] {
+        guard !isSuspended else { return [] }
+        var names: [String] = []
         for profile in loadProfiles() {
             for schedule in profile.schedules where schedule.isEnabled && schedule.isValid {
-                if schedule.wantsBlock() { return true }
+                if schedule.wantsBlock() { names.append(schedule.name) }
             }
         }
-        return false
+        return names
+    }
+
+    static func isAnyScheduleBlocking() -> Bool {
+        !activeBlockingScheduleNames().isEmpty
     }
 
     // MARK: - One-time migration from UserDefaults.standard
