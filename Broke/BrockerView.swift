@@ -23,6 +23,7 @@ struct BrokerView: View {
     @State private var showWriteResultAlert = false
     @State private var nfcWriteSuccess = false
     @State private var activeScheduleNames: [String] = []
+    private let refreshTimer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
 
     private var isScheduleBlocking: Bool {
         !activeScheduleNames.isEmpty
@@ -78,6 +79,11 @@ struct BrokerView: View {
             if newPhase == .active {
                 refreshScheduleBlockingState()
             }
+        }
+        .onReceive(refreshTimer) { _ in
+            // SharedStore is UserDefaults-backed and doesn't push updates — poll while
+            // the screen is open so a schedule starting mid-session shows up on its own.
+            refreshScheduleBlockingState()
         }
     }
 
@@ -148,14 +154,17 @@ struct BrokerView: View {
                 return
             }
 
-            if isScheduleBlocking {
+            // Re-check fresh rather than trust `isScheduleBlocking` — that @State can
+            // be stale by up to the poll interval, and taking the wrong branch here
+            // means the wrong shield gets touched.
+            if !SharedStore.activeBlockingScheduleNames().isEmpty {
                 NSLog("Suspending active schedule for \(Int(Self.earlyUnblockDuration / 60)) minutes")
                 ScheduleManager.suspendActiveSchedules(for: Self.earlyUnblockDuration, profiles: profileManager.profiles)
-                refreshScheduleBlockingState()
             } else {
                 NSLog("Toggling block")
                 appBlocker.toggleBlocking(for: profileManager.currentProfile)
             }
+            refreshScheduleBlockingState()
         }
     }
     

@@ -156,7 +156,7 @@ Window transitions work at the end of this phase.
   computes `wantsBlock()` for every schedule and applies or clears accordingly, so a
   freshly created `.block` schedule outside its window is correctly left unblocked
   rather than needing a separate code path.
-- [ ] **you** Set a window a few minutes ahead, confirm the shield appears and clears
+- [x] **you** Confirmed a schedule window triggers the shield on-device
 
 ### Phase 5 — budgets
 
@@ -180,16 +180,28 @@ Window transitions work at the end of this phase.
 
 The home screen tracks two independent shield sources: the manual toggle
 (`appBlocker.isBlocking`) and any currently active schedule
-(`SharedStore.activeBlockingScheduleNames()`, refreshed on appear and on returning to
-the foreground). It shows blocked if either one is, names which source is active
-("Blocked manually", "Blocked by schedule: <name>", or both), and the tap label says
-which action a tap will take.
+(`SharedStore.activeBlockingScheduleNames()`). It shows blocked if either one is, names
+which source is active ("Blocked manually", "Blocked by schedule: <name>", or both),
+and the tap label says which action a tap will take.
+
+`SharedStore` is `UserDefaults`-backed and never pushes updates to an already-running
+view, so schedule state is refreshed on appear, on returning to the foreground, and on
+a 5-second timer while the screen is open — otherwise a schedule starting mid-session
+would never show up without backgrounding the app first. A tag scan re-checks
+`SharedStore.activeBlockingScheduleNames()` fresh rather than trusting that polled
+state, since taking the wrong branch there means touching the wrong shield.
 
 A tag scan while a schedule is the active blocker does not touch the manual toggle —
 it suspends every schedule for 30 minutes (`ScheduleManager.suspendActiveSchedules`),
 which writes `SharedStore.suspendedUntil` and immediately clears the currently-blocking
 schedules' shields via `sync`. A tag scan while nothing is schedule-blocking falls
 through to the pre-existing manual toggle, unchanged.
+
+The manual toggle and each schedule write to separate named `ManagedSettingsStore`s
+(see Design), which should mean toggling the manual store never touches a schedule's
+own shield. Not yet independently confirmed on-device — verify by triggering a
+schedule, then toggling the manual button, and checking the actually-shielded app
+directly rather than only Broke's own screen.
 
 Since a schedule's own start/end boundaries are typically hours apart, nothing else
 fires at the 30-minute mark on its own. `ScheduleManager` registers a one-shot,
@@ -204,9 +216,17 @@ made during the 30 minutes doesn't cancel the automatic re-block.
 - [x] A one-shot wake-up activity re-applies the shield automatically when the
 
   suspension ends
+- [x] Schedule state refreshes on a 5-second timer while the screen is open, not only
+
+  on appear/foreground, and a tag scan re-checks fresh state rather than the polled
+  `@State` before deciding which shield to touch
 - [ ] **you** Trigger a schedule, scan the tag, confirm the block clears and the label
 
   changes; confirm it re-blocks on its own 30 minutes later without reopening the app
+- [ ] **you** With a schedule active, tap the manual toggle on and back off, then
+
+  check the actually-shielded app directly (not just Broke's screen) to confirm the
+  schedule's own shield was never touched
 
 ### Phase 7 — hardening
 
