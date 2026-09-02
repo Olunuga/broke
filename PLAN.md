@@ -95,12 +95,15 @@ No user-visible change. Confirm blocking still works before continuing.
 
 Persisted but not yet active.
 
-- [ ] New `Broke/Schedule.swift`
-- [ ] `Profile` gains `schedules`
-- [ ] `ScheduleListView` and `ScheduleFormView` (weekday toggles, two `.hourAndMinute`
+- [x] New `Broke/Schedule.swift`
+- [x] `Profile` gains `schedules`
+- [x] `ScheduleListView` and `ScheduleFormView` (weekday toggles, two `.hourAndMinute`
       pickers, budget stepper)
-- [ ] Form validation: reject intervals under 15 minutes, reject windows that cross
+- [x] Form validation: reject intervals under 15 minutes, reject windows that cross
       midnight
+- [ ] **you** Run, open a profile, add a schedule, confirm it saves and reopens with
+      the same values. Try an invalid window (end before start, or under 15 minutes)
+      and confirm Save stays disabled with the error shown.
 
 ### Phase 4 — monitor extension
 

@@ -33,7 +33,12 @@ struct ProfileFormView: View {
         selection.webDomainTokens = profile?.webDomainTokens ?? []
         _activitySelection = State(initialValue: selection)
     }
-    
+
+    private var currentSchedules: [Schedule] {
+        guard let profile else { return [] }
+        return profileManager.profiles.first(where: { $0.id == profile.id })?.schedules ?? []
+    }
+
     var body: some View {
         NavigationView {
             Form {
@@ -89,6 +94,21 @@ struct ProfileFormView: View {
                     }
                 }
                 
+                if let profile {
+                    Section(header: Text("Schedules")) {
+                        NavigationLink {
+                            ScheduleListView(profileManager: profileManager, profileId: profile.id)
+                        } label: {
+                            HStack {
+                                Text("Manage Schedules")
+                                Spacer()
+                                Text("\(currentSchedules.count)")
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
+
                 if profile != nil {
                     Section {
                         Button(action: { showDeleteConfirmation = true }) {

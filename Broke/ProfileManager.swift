@@ -152,7 +152,28 @@ class ProfileManager: ObservableObject {
             saveProfiles()
         }
     }
-    
+
+    // MARK: - Schedules
+
+    func addSchedule(_ schedule: Schedule, toProfileWithId id: UUID) {
+        guard let index = profiles.firstIndex(where: { $0.id == id }) else { return }
+        profiles[index].schedules.append(schedule)
+        saveProfiles()
+    }
+
+    func updateSchedule(_ schedule: Schedule, inProfileWithId id: UUID) {
+        guard let profileIndex = profiles.firstIndex(where: { $0.id == id }),
+              let scheduleIndex = profiles[profileIndex].schedules.firstIndex(where: { $0.id == schedule.id }) else { return }
+        profiles[profileIndex].schedules[scheduleIndex] = schedule
+        saveProfiles()
+    }
+
+    func deleteSchedule(withId scheduleId: UUID, fromProfileWithId id: UUID) {
+        guard let index = profiles.firstIndex(where: { $0.id == id }) else { return }
+        profiles[index].schedules.removeAll { $0.id == scheduleId }
+        saveProfiles()
+    }
+
     private func ensureDefaultProfile() {
         if profiles.isEmpty {
             let defaultProfile = Profile(name: "Default", appTokens: [], categoryTokens: [], icon: "bell.slash")
@@ -176,6 +197,7 @@ struct Profile: Identifiable, Codable {
     var appTokens: Set<ApplicationToken>
     var categoryTokens: Set<ActivityCategoryToken>
     var webDomainTokens: Set<WebDomainToken>
+    var schedules: [Schedule]
     var icon: String // New property for icon
 
     var isDefault: Bool {
@@ -188,6 +210,7 @@ struct Profile: Identifiable, Codable {
         appTokens: Set<ApplicationToken>,
         categoryTokens: Set<ActivityCategoryToken>,
         webDomainTokens: Set<WebDomainToken> = [],
+        schedules: [Schedule] = [],
         icon: String = "bell.slash"
     ) {
         self.id = UUID()
@@ -195,10 +218,11 @@ struct Profile: Identifiable, Codable {
         self.appTokens = appTokens
         self.categoryTokens = categoryTokens
         self.webDomainTokens = webDomainTokens
+        self.schedules = schedules
         self.icon = icon
     }
 
-    // Profiles saved before webDomainTokens existed have no such key.
+    // Profiles saved before webDomainTokens/schedules existed have no such keys.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
@@ -206,6 +230,7 @@ struct Profile: Identifiable, Codable {
         appTokens = try container.decode(Set<ApplicationToken>.self, forKey: .appTokens)
         categoryTokens = try container.decode(Set<ActivityCategoryToken>.self, forKey: .categoryTokens)
         webDomainTokens = try container.decodeIfPresent(Set<WebDomainToken>.self, forKey: .webDomainTokens) ?? []
+        schedules = try container.decodeIfPresent([Schedule].self, forKey: .schedules) ?? []
         icon = try container.decode(String.self, forKey: .icon)
     }
 }
