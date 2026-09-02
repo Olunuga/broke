@@ -75,7 +75,7 @@ struct BrokerView: View {
                     .background(isBlocked ? Color("BlockingBackground") : Color("NonBlockingBackground"))
                 }
             }
-            .navigationBarItems(trailing: createTagButton)
+            .navigationBarItems(leading: debugSuspensionControl, trailing: createTagButton)
             .alert(isPresented: $showWrongTagAlert) {
                 Alert(
                     title: Text("Not a Broker Tag"),
@@ -199,6 +199,27 @@ struct BrokerView: View {
         }
         .disabled(!NFCNDEFReaderSession.readingAvailable)
     }
+
+    /// Debug builds only — a suspension is otherwise only clearable by waiting it out
+    /// or scanning the tag again, both slow when iterating on schedule changes.
+    @ViewBuilder
+    private var debugSuspensionControl: some View {
+        #if DEBUG
+        if isSuspended {
+            Button(action: clearSuspensionForTesting) {
+                Image(systemName: "clock.badge.xmark")
+            }
+        }
+        #endif
+    }
+
+    #if DEBUG
+    private func clearSuspensionForTesting() {
+        SharedStore.suspendedUntil = nil
+        ScheduleManager.sync(profiles: profileManager.profiles)
+        refreshScheduleBlockingState()
+    }
+    #endif
     
     private func createBrokerTag() {
         nfcReader.write(tagPhrase) { success in
