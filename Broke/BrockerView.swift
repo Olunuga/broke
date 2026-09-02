@@ -155,11 +155,15 @@ struct BrokerView: View {
         }
     }
 
+    private var earlyUnblockMinutesLabel: String {
+        "\(Int(Self.earlyUnblockDuration / 60)) minutes"
+    }
+
     private var blockButtonLabel: String {
         if isScheduleBlocking {
             return appBlocker.isBlocking
-                ? "Tap to end the schedule early (manual block stays on)"
-                : "Tap to end this block early"
+                ? "Tap to suspend the schedule for \(earlyUnblockMinutesLabel) (manual block stays on)"
+                : "Tap to suspend this block for \(earlyUnblockMinutesLabel)"
         }
         return appBlocker.isBlocking ? "Tap to unblock" : "Tap to block"
     }
