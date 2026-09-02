@@ -67,25 +67,25 @@ monitoring re-registers mid-window.
 - [x] Signing set, app runs on device
 - [x] `NDEF` added to `Broke/Broke.entitlements`
 - [x] Tag write and scan verified
-- [ ] Fix the inverted write alert (`Broke/BrockerView.swift:118`)
+- [x] Fix the inverted write alert (`Broke/BrockerView.swift:118`)
 
 ### Phase 1 — shared foundation
 
 No user-visible change. Confirm blocking still works before continuing.
 
-- [ ] **you** Signing & Capabilities > + Capability > App Groups > `group.com.Brokeest.ios`
-- [ ] Add `com.apple.security.application-groups` to `Broke/Broke.entitlements`
-- [ ] New `Broke/SharedStore.swift`: group `UserDefaults`, named `ManagedSettingsStore`,
+- [x] **you** Signing & Capabilities > + Capability > App Groups > `group.com.Brokeest.ios`
+- [x] Add `com.apple.security.application-groups` to `Broke/Broke.entitlements`
+- [x] New `Broke/SharedStore.swift`: group `UserDefaults`, named `ManagedSettingsStore`,
       suspension date, one-time migration from `UserDefaults.standard`
-- [ ] `ProfileManager` reads and writes the group defaults
-- [ ] `AppBlocker` uses the named store; `BrokeApp.init` runs the migration first
-- [ ] **you** Run, confirm existing profiles survive and blocking still works
+- [x] `ProfileManager` reads and writes the group defaults
+- [x] `AppBlocker` uses the named store; `BrokeApp.init` runs the migration first
+- [x] **you** Run, confirm existing profiles survive and blocking still works
 
 ### Phase 2 — websites
 
-- [ ] `Profile` gains `webDomainTokens`
-- [ ] `ProfileFormView` reads and writes `activitySelection.webDomainTokens`
-- [ ] `AppBlocker` sets and clears `store.shield.webDomains`
+- [x] `Profile` gains `webDomainTokens`
+- [x] `ProfileFormView` reads and writes `activitySelection.webDomainTokens`
+- [x] `AppBlocker` sets and clears `store.shield.webDomains`
 - [ ] **you** Pick a website in the picker, confirm Safari shows the shield
 - [ ] **you** Test the same domain in Chrome, and record the result. It decides whether
       the phase 7 allowlist is needed.

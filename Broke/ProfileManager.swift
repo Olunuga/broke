@@ -125,6 +125,7 @@ class ProfileManager: ObservableObject {
         name: String? = nil,
         appTokens: Set<ApplicationToken>? = nil,
         categoryTokens: Set<ActivityCategoryToken>? = nil,
+        webDomainTokens: Set<WebDomainToken>? = nil,
         icon: String? = nil
     ) {
         if let index = profiles.firstIndex(where: { $0.id == id }) {
@@ -136,6 +137,9 @@ class ProfileManager: ObservableObject {
             }
             if let categoryTokens = categoryTokens {
                 profiles[index].categoryTokens = categoryTokens
+            }
+            if let webDomainTokens = webDomainTokens {
+                profiles[index].webDomainTokens = webDomainTokens
             }
             if let icon = icon {
                 profiles[index].icon = icon
@@ -171,6 +175,7 @@ struct Profile: Identifiable, Codable {
     var name: String
     var appTokens: Set<ApplicationToken>
     var categoryTokens: Set<ActivityCategoryToken>
+    var webDomainTokens: Set<WebDomainToken>
     var icon: String // New property for icon
 
     var isDefault: Bool {
@@ -178,11 +183,29 @@ struct Profile: Identifiable, Codable {
     }
 
     // New initializer to support default icon
-    init(name: String, appTokens: Set<ApplicationToken>, categoryTokens: Set<ActivityCategoryToken>, icon: String = "bell.slash") {
+    init(
+        name: String,
+        appTokens: Set<ApplicationToken>,
+        categoryTokens: Set<ActivityCategoryToken>,
+        webDomainTokens: Set<WebDomainToken> = [],
+        icon: String = "bell.slash"
+    ) {
         self.id = UUID()
         self.name = name
         self.appTokens = appTokens
         self.categoryTokens = categoryTokens
+        self.webDomainTokens = webDomainTokens
         self.icon = icon
+    }
+
+    // Profiles saved before webDomainTokens existed have no such key.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        appTokens = try container.decode(Set<ApplicationToken>.self, forKey: .appTokens)
+        categoryTokens = try container.decode(Set<ActivityCategoryToken>.self, forKey: .categoryTokens)
+        webDomainTokens = try container.decodeIfPresent(Set<WebDomainToken>.self, forKey: .webDomainTokens) ?? []
+        icon = try container.decode(String.self, forKey: .icon)
     }
 }
