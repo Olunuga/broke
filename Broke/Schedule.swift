@@ -89,6 +89,12 @@ struct Schedule: Codable, Identifiable, Equatable {
         DeviceActivityName(id.uuidString)
     }
 
+    /// Only meaningful for `.allow` — the daily-usage budget event attached to this
+    /// schedule's own activity, since the budget and the window cover the same span.
+    var budgetEventName: DeviceActivityEvent.Name {
+        DeviceActivityEvent.Name(id.uuidString)
+    }
+
     var storeName: ManagedSettingsStore.Name {
         ManagedSettingsStore.Name(id.uuidString)
     }

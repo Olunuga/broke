@@ -22,12 +22,16 @@ struct BrokerView: View {
     @State private var showCreateTagAlert = false
     @State private var showWriteResultAlert = false
     @State private var nfcWriteSuccess = false
-    @State private var activeScheduleNames: [String] = []
+    @State private var activeSchedules: [Schedule] = []
     @State private var suspendedUntil: Date?
     private let refreshTimer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
 
     private var isScheduleBlocking: Bool {
-        !activeScheduleNames.isEmpty
+        !activeSchedules.isEmpty
+    }
+
+    private var activeScheduleNames: [String] {
+        activeSchedules.map { $0.name }
     }
 
     /// A suspension makes `isScheduleBlocking` false the same as "nothing scheduled"
@@ -120,6 +124,13 @@ struct BrokerView: View {
                     .transition(.scale)
             }
 
+            ForEach(activeSchedules) { schedule in
+                Text(scheduleDetailLabel(for: schedule))
+                    .font(.caption2)
+                    .opacity(0.7)
+                    .transition(.scale)
+            }
+
             Text(blockButtonLabel)
                 .font(.caption)
                 .opacity(0.75)
@@ -168,8 +179,20 @@ struct BrokerView: View {
         return appBlocker.isBlocking ? "Tap to unblock" : "Tap to block"
     }
 
+    private func scheduleDetailLabel(for schedule: Schedule) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        let start = Calendar.current.date(from: schedule.startTime) ?? Date()
+        let end = Calendar.current.date(from: schedule.endTime) ?? Date()
+        var label = "\(formatter.string(from: start))–\(formatter.string(from: end))"
+        if schedule.mode == .allow, let budgetMinutes = schedule.budgetMinutes {
+            label += " · \(budgetMinutes) min/day limit"
+        }
+        return label
+    }
+
     private func refreshScheduleBlockingState() {
-        activeScheduleNames = SharedStore.activeBlockingScheduleNames()
+        activeSchedules = SharedStore.activeBlockingSchedules()
         suspendedUntil = SharedStore.suspendedUntil
     }
 
@@ -184,7 +207,7 @@ struct BrokerView: View {
             // Re-check fresh rather than trust `isScheduleBlocking` — that @State can
             // be stale by up to the poll interval, and taking the wrong branch here
             // means the wrong shield gets touched.
-            if !SharedStore.activeBlockingScheduleNames().isEmpty {
+            if !SharedStore.activeBlockingSchedules().isEmpty {
                 NSLog("Suspending active schedule for \(Int(Self.earlyUnblockDuration / 60)) minutes")
                 ScheduleManager.suspendActiveSchedules(for: Self.earlyUnblockDuration, profiles: profileManager.profiles)
             } else {

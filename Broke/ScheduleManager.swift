@@ -28,7 +28,9 @@ enum ScheduleManager {
         )
 
         for schedule in allSchedules where schedule.isEnabled && schedule.isValid {
-            startMonitoring(schedule)
+            if let profile = profileBySchedule[schedule.id] {
+                startMonitoring(schedule, profile: profile)
+            }
         }
 
         for schedule in allSchedules {
@@ -63,15 +65,41 @@ enum ScheduleManager {
         sync(profiles: profiles)
     }
 
-    private static func startMonitoring(_ schedule: Schedule) {
+    private static func startMonitoring(_ schedule: Schedule, profile: Profile) {
         let activitySchedule = DeviceActivitySchedule(
             intervalStart: schedule.startTime,
             intervalEnd: schedule.endTime,
             repeats: true
         )
 
+        var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
+        // `.block`'s budget caps usage outside the blocked window, which this
+        // activity's interval doesn't cover — not yet designed, see PLAN.md.
+        if schedule.mode == .allow, let budgetMinutes = schedule.budgetMinutes, budgetMinutes > 0 {
+            let threshold = DateComponents(minute: budgetMinutes)
+            // `includesPastActivity` needs iOS 17.4+; without it, re-registering
+            // mid-window (any schedule edit does, via stopMonitoring) resets the
+            // budget's accumulated usage on older OS versions.
+            if #available(iOS 17.4, *) {
+                events[schedule.budgetEventName] = DeviceActivityEvent(
+                    applications: profile.appTokens,
+                    categories: profile.categoryTokens,
+                    webDomains: profile.webDomainTokens,
+                    threshold: threshold,
+                    includesPastActivity: true
+                )
+            } else {
+                events[schedule.budgetEventName] = DeviceActivityEvent(
+                    applications: profile.appTokens,
+                    categories: profile.categoryTokens,
+                    webDomains: profile.webDomainTokens,
+                    threshold: threshold
+                )
+            }
+        }
+
         do {
-            try center.startMonitoring(schedule.activityName, during: activitySchedule)
+            try center.startMonitoring(schedule.activityName, during: activitySchedule, events: events)
         } catch {
             NSLog("Broke: failed to start monitoring schedule '\(schedule.name)': \(error)")
         }

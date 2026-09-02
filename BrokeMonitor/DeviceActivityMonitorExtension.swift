@@ -28,7 +28,18 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
 
     override func eventDidReachThreshold(_ event: DeviceActivityEvent.Name, activity: DeviceActivityName) {
         super.eventDidReachThreshold(event, activity: activity)
-        // Daily budgets land in phase 5.
+
+        guard let scheduleId = UUID(uuidString: activity.rawValue),
+              let (profile, schedule) = SharedStore.schedule(withId: scheduleId),
+              event == schedule.budgetEventName,
+              !SharedStore.isSuspended else {
+            return
+        }
+
+        // Budget spent for the rest of today's window. The threshold resets, and this
+        // clears, at the schedule's own next intervalDidStart — no separate reset
+        // logic needed.
+        ShieldWriter.apply(profile, to: ManagedSettingsStore(named: schedule.storeName))
     }
 
     /// Neither callback says which edge fired, and a schedule only runs on some

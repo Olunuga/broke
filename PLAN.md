@@ -162,27 +162,33 @@ Window transitions work at the end of this phase.
 
 - [x] Form copy is mode-aware: `.allow` reads "Limit use inside window"; `.block` reads
 
-  "Limit use outside window". Neither is enforced yet — the toggle and stepper persist
-  `budgetMinutes` on the schedule, but nothing reads it.
-- [ ] For `.allow`: attach `DeviceActivityEvent(applications:categories:webDomains:threshold:includesPastActivity:
+  "Limit use outside window".
+- [x] For `.allow`: `ScheduleManager.startMonitoring` attaches a `DeviceActivityEvent`
 
-  true)` to the schedule's own activity — the window and the tracked usage cover the
-  same span, so one event suffices. Without `includesPastActivity: true` the budget
-  restarts if monitoring re-registers mid-window.
+  to the schedule's own activity when `budgetMinutes` is set — the window and the
+  tracked usage cover the same span, so one event suffices. Uses
+  `includesPastActivity: true` on iOS 17.4+ so the budget survives a schedule edit
+  mid-window (`stopMonitoring`/re-register); falls back to the base initializer below
+  that OS version, where a mid-window edit does reset the count.
 - [ ] For `.block`: the blocked window and the tracked span don't match, so this needs
 
   its own activity covering the rest of the day rather than reusing the block
   activity's event. Not yet designed.
-- [ ] Handle `eventDidReachThreshold` by applying the shield
+- [x] `eventDidReachThreshold` applies the schedule's shield for the rest of today's
+
+  window once its budget event fires. No separate reset logic needed — the schedule's
+  own next `intervalDidStart` recomputes `wantsBlock()` fresh and clears it, since a
+  new day means the threshold has reset too.
 - [ ] **you** Test the Wednesday-to-Saturday, 30-minute `.allow` case
 
 ### Phase 6 — NFC early unblock
 
 The home screen tracks two independent shield sources: the manual toggle
 (`appBlocker.isBlocking`) and any currently active schedule
-(`SharedStore.activeBlockingScheduleNames()`). It shows blocked if either one is, names
+(`SharedStore.activeBlockingSchedules()`). It shows blocked if either one is, names
 which source is active ("Blocked manually", "Blocked by schedule: <name>", or both),
-and the tap label says which action a tap will take.
+lists each active schedule's window and (for `.allow`) its daily limit, and the tap
+label says which action a tap will take.
 
 `SharedStore` is `UserDefaults`-backed and never pushes updates to an already-running
 view, so schedule state is refreshed on appear, on returning to the foreground, and on
