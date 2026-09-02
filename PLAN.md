@@ -232,15 +232,12 @@ made during the 30 minutes doesn't cancel the automatic re-block.
 
   clearing the suspension early all behave correctly — the block clears on suspend and
   reapplies immediately once the suspension ends, label changes throughout.
-- [ ] **you** The unassisted 30-minute wake-up — letting a suspension run out on its
+- [x] **you** Confirmed the unassisted 30-minute wake-up test's unblocked result was
 
-  own, app closed, no debug button — showed neither Broke nor the target app blocked
-  once it expired. Two explanations, not yet distinguished: the schedule's window had
-  already closed by then (correct behavior, nothing to re-block), or the one-shot
-  activity genuinely failed to fire. Hardened regardless: `scheduleWakeUp` now uses
-  minute precision instead of seconds (see Design), and returning to the foreground
-  runs `ScheduleManager.sync` as a self-healing check independent of whether the
-  background callback fired. Retest to confirm which explanation it was.
+  correct: the schedule's window had already closed by the time the suspension
+  expired, so there was nothing left to re-block. The minute-precision fix and the
+  foreground resync (see Design) stand regardless, as defensive hardening rather than
+  a confirmed bug fix.
 - [x] The manual toggle can't touch a schedule's shield through the UI: `scanTag`
 
   checks `SharedStore.activeBlockingSchedules()` before deciding what a tap does,
