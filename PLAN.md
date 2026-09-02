@@ -220,9 +220,14 @@ made during the 30 minutes doesn't cancel the automatic re-block.
 
   on appear/foreground, and a tag scan re-checks fresh state rather than the polled
   `@State` before deciding which shield to touch
-- [ ] **you** Trigger a schedule, scan the tag, confirm the block clears and the label
+- [x] **you** Confirmed on-device: triggering a schedule, scanning the tag, and
 
-  changes; confirm it re-blocks on its own 30 minutes later without reopening the app
+  clearing the suspension early all behave correctly — the block clears on suspend and
+  reapplies immediately once the suspension ends, label changes throughout.
+- [ ] **you** Still untested: the unassisted 30-minute wake-up specifically — letting a
+
+  suspension run out on its own, app closed, with no debug button involved, to confirm
+  the one-shot `DeviceActivitySchedule` callback fires without any user action.
 - [x] The manual toggle can't touch a schedule's shield through the UI: `scanTag`
 
   checks `SharedStore.activeBlockingScheduleNames()` before deciding what a tap does,
