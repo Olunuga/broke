@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B9A4E3EBDD5168920C21CCF5 /* DeviceActivityMonitorExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 858662BEED185FCBAFC5A52B /* DeviceActivityMonitorExtension.swift */; };
+		8FEAC78AEC8DAA5BA47A0A97 /* BrokeMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 93C5B49DE5BE6A95E2A8785F /* BrokeMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeaderOnCopy, ); }; };
 		F51C38D22C775953003B4EB3 /* CoreNFC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F51C38D02C77594E003B4EB3 /* CoreNFC.framework */; };
 		F51C38D72C775CAF003B4EB3 /* AppBlocker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F51C38D62C775CAF003B4EB3 /* AppBlocker.swift */; };
 		55E9BBA9FCC6B412D59D03AF /* Schedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1602DAC877F6AA88AEA3E38D /* Schedule.swift */; };
@@ -24,7 +26,43 @@
 		F5A3B0662C733E3500BD6C7F /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F5A3B0652C733E3500BD6C7F /* Preview Assets.xcassets */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		A3729A017D24C152C24EE384 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				8FEAC78AEC8DAA5BA47A0A97 /* BrokeMonitor.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXContainerItemProxy section */
+		8EB9C26D5CC239A2B2160923 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F5A3B0532C733E3400BD6C7F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6B1216F043097BF0C418D0B1;
+			remoteInfo = BrokeMonitor;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		15B4E1D6C9FFAF6AC730475B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6B1216F043097BF0C418D0B1 /* BrokeMonitor */;
+			targetProxy = 8EB9C26D5CC239A2B2160923 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin PBXFileReference section */
+		858662BEED185FCBAFC5A52B /* DeviceActivityMonitorExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceActivityMonitorExtension.swift; sourceTree = "<group>"; };
+		9153E960973D60133DC2BA30 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C9B80FC8DEDB34DBB745B339 /* BrokeMonitor.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BrokeMonitor.entitlements; sourceTree = "<group>"; };
+		93C5B49DE5BE6A95E2A8785F /* BrokeMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BrokeMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F51C38D02C77594E003B4EB3 /* CoreNFC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreNFC.framework; path = System/Library/Frameworks/CoreNFC.framework; sourceTree = SDKROOT; };
 		F51C38D52C775AAF003B4EB3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F51C38D62C775CAF003B4EB3 /* AppBlocker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlocker.swift; sourceTree = "<group>"; };
@@ -54,6 +92,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A9304B7DA719F5155FF1920D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -69,6 +114,7 @@
 			isa = PBXGroup;
 			children = (
 				F5A3B05D2C733E3400BD6C7F /* Broke */,
+				3CD2A215CD4CEEB86C6EBA33 /* BrokeMonitor */,
 				F5A3B05C2C733E3400BD6C7F /* Products */,
 				F51C38CF2C77594E003B4EB3 /* Frameworks */,
 			);
@@ -78,6 +124,7 @@
 			isa = PBXGroup;
 			children = (
 				F5A3B05B2C733E3400BD6C7F /* Broke.app */,
+				93C5B49DE5BE6A95E2A8785F /* BrokeMonitor.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -112,6 +159,16 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
+		3CD2A215CD4CEEB86C6EBA33 /* BrokeMonitor */ = {
+			isa = PBXGroup;
+			children = (
+				858662BEED185FCBAFC5A52B /* DeviceActivityMonitorExtension.swift */,
+				9153E960973D60133DC2BA30 /* Info.plist */,
+				C9B80FC8DEDB34DBB745B339 /* BrokeMonitor.entitlements */,
+			);
+			path = BrokeMonitor;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -122,10 +179,12 @@
 				F5A3B0572C733E3400BD6C7F /* Sources */,
 				F5A3B0582C733E3400BD6C7F /* Frameworks */,
 				F5A3B0592C733E3400BD6C7F /* Resources */,
+				A3729A017D24C152C24EE384 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				15B4E1D6C9FFAF6AC730475B /* PBXTargetDependency */,
 			);
 			name = Broke;
 			packageProductDependencies = (
@@ -134,6 +193,23 @@
 			productName = Broke;
 			productReference = F5A3B05B2C733E3400BD6C7F /* Broke.app */;
 			productType = "com.apple.product-type.application";
+		};
+		6B1216F043097BF0C418D0B1 /* BrokeMonitor */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 08CD839C2E460D8914CB82DF /* Build configuration list for PBXNativeTarget "BrokeMonitor" */;
+			buildPhases = (
+				4242F85C9DEA1524A73C3E11 /* Sources */,
+				A9304B7DA719F5155FF1920D /* Frameworks */,
+				A85A471596A14A4936A7E61C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BrokeMonitor;
+			productName = BrokeMonitor;
+			productReference = 93C5B49DE5BE6A95E2A8785F /* BrokeMonitor.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -146,6 +222,9 @@
 				LastUpgradeCheck = 1540;
 				TargetAttributes = {
 					F5A3B05A2C733E3400BD6C7F = {
+						CreatedOnToolsVersion = 14.3.1;
+					};
+					6B1216F043097BF0C418D0B1 = {
 						CreatedOnToolsVersion = 14.3.1;
 					};
 				};
@@ -167,6 +246,7 @@
 			projectRoot = "";
 			targets = (
 				F5A3B05A2C733E3400BD6C7F /* Broke */,
+				6B1216F043097BF0C418D0B1 /* BrokeMonitor */,
 			);
 		};
 /* End PBXProject section */
@@ -178,6 +258,13 @@
 			files = (
 				F5A3B0662C733E3500BD6C7F /* Preview Assets.xcassets in Resources */,
 				F5A3B0632C733E3500BD6C7F /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A85A471596A14A4936A7E61C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -202,9 +289,75 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		4242F85C9DEA1524A73C3E11 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B9A4E3EBDD5168920C21CCF5 /* DeviceActivityMonitorExtension.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		2A617E192074802526B09F45 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BrokeMonitor/BrokeMonitor.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CH4P23R94R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BrokeMonitor/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BrokeMonitor;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Brokeest.ios.BrokeMonitor;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		809F09F2FFCE1EEEC2F1FE39 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BrokeMonitor/BrokeMonitor.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CH4P23R94R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BrokeMonitor/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BrokeMonitor;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Brokeest.ios.BrokeMonitor;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 		F5A3B0672C733E3500BD6C7F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -408,6 +561,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		08CD839C2E460D8914CB82DF /* Build configuration list for PBXNativeTarget "BrokeMonitor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2A617E192074802526B09F45 /* Debug */,
+				809F09F2FFCE1EEEC2F1FE39 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		F5A3B0562C733E3400BD6C7F /* Build configuration list for PBXProject "Broke" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

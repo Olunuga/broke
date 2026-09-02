@@ -109,10 +109,17 @@ Persisted but not yet active.
 
 Window transitions work at the end of this phase.
 
-- [ ] **you** File > New > Target > Device Activity Monitor Extension, named `BrokeMonitor`
-- [ ] **you** Give the extension the Family Controls capability, the App Group, and the team
-- [ ] `BrokeMonitor/DeviceActivityMonitorExtension.swift`: `intervalDidStart`,
-      `intervalDidEnd`, weekday filter, suspension check
+- [x] `BrokeMonitor` target: Family Controls and App Group entitlements, team
+      `CH4P23R94R`, embedded into the app via a Copy Files build phase, wired as a
+      target dependency so it builds before the app. The `.appex` lands in
+      `Broke.app/PlugIns` with `NSExtensionPrincipalClass` resolving to
+      `BrokeMonitor.DeviceActivityMonitorExtension`.
+- [ ] **you** Open the project in Xcode once and confirm Signing & Capabilities shows
+      Family Controls and the App Group on the `BrokeMonitor` target with no signing
+      errors.
+- [ ] `BrokeMonitor/DeviceActivityMonitorExtension.swift` currently has empty
+      `intervalDidStart`/`intervalDidEnd`/`eventDidReachThreshold` overrides. Next:
+      weekday filter, shield apply/remove, suspension check.
 - [ ] `Broke/ScheduleManager.swift`: `startMonitoring` and `stopMonitoring`
 - [ ] Apply the shield on save for `.allow` schedules
 - [ ] **you** Set a window a few minutes ahead, confirm the shield appears and clears
