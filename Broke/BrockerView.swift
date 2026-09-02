@@ -103,6 +103,12 @@ struct BrokerView: View {
         .onAppear { refreshScheduleBlockingState() }
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .active {
+                // The blocked-screen display and the real ManagedSettings shield are
+                // computed independently — a missed extension callback (e.g. a wake-up
+                // that failed to register) wouldn't show up as wrong on screen without
+                // this. Re-running sync on every foreground catches that regardless of
+                // why the background path missed it.
+                ScheduleManager.sync(profiles: profileManager.profiles)
                 refreshScheduleBlockingState()
             }
         }

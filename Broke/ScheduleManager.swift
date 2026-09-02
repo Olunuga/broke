@@ -107,11 +107,16 @@ enum ScheduleManager {
 
     /// A one-shot `DeviceActivitySchedule` from now until `date`, `repeats: false`, so
     /// its `intervalDidEnd` fires exactly once, at the suspension's end.
+    ///
+    /// Minute precision, not second: `DeviceActivitySchedule`'s documented pattern is
+    /// built around hour/minute, and second-level components risked a silent
+    /// `invalidDateComponents` failure with no way to observe it from the UI.
     private static func scheduleWakeUp(at date: Date) {
         let calendar = Calendar.current
-        let components: Set<Calendar.Component> = [.year, .month, .day, .hour, .minute, .second]
+        let components: Set<Calendar.Component> = [.year, .month, .day, .hour, .minute]
         let start = calendar.dateComponents(components, from: Date())
-        let end = calendar.dateComponents(components, from: date)
+        // Round the end up a minute so truncating seconds can't put it before `start`.
+        let end = calendar.dateComponents(components, from: date.addingTimeInterval(60))
         let wakeSchedule = DeviceActivitySchedule(intervalStart: start, intervalEnd: end, repeats: false)
 
         do {

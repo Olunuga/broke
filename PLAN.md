@@ -204,17 +204,19 @@ schedules' shields via `sync`. A tag scan while nothing is schedule-blocking fal
 through to the pre-existing manual toggle, unchanged.
 
 The manual toggle and each schedule write to separate named `ManagedSettingsStore`s
-(see Design), which should mean toggling the manual store never touches a schedule's
-own shield. Not yet independently confirmed on-device — verify by triggering a
-schedule, then toggling the manual button, and checking the actually-shielded app
-directly rather than only Broke's own screen.
+(see Design). `appBlocker.toggleBlocking` is only reachable when no schedule is
+blocking (see below), so there's no UI path where it runs during an active schedule
+block to interfere with.
 
 Since a schedule's own start/end boundaries are typically hours apart, nothing else
 fires at the 30-minute mark on its own. `ScheduleManager` registers a one-shot,
 non-repeating `DeviceActivitySchedule` ending exactly at `suspendedUntil`
-(`SharedStore.resumeCheckActivityName`); its `intervalDidEnd` re-evaluates every known
-schedule and re-applies whichever ones `wantsBlock()` again. `sync` re-registers this
-wake-up on every call while a suspension is in progress, so an unrelated schedule edit
+(`SharedStore.resumeCheckActivityName`, minute precision — `DeviceActivitySchedule`'s
+documented pattern centers on hour/minute, and second-level components risked a silent
+`invalidDateComponents` failure with no way to observe it from the UI); its
+`intervalDidEnd` re-evaluates every known schedule and re-applies whichever ones
+`wantsBlock()` again. `sync` re-registers this wake-up on every call while a
+suspension is in progress, so an unrelated schedule edit
 made during the 30 minutes doesn't cancel the automatic re-block.
 
 - [x] Home screen reflects schedule-driven blocking, not just the manual toggle
@@ -230,13 +232,18 @@ made during the 30 minutes doesn't cancel the automatic re-block.
 
   clearing the suspension early all behave correctly — the block clears on suspend and
   reapplies immediately once the suspension ends, label changes throughout.
-- [ ] **you** Still untested: the unassisted 30-minute wake-up specifically — letting a
+- [ ] **you** The unassisted 30-minute wake-up — letting a suspension run out on its
 
-  suspension run out on its own, app closed, with no debug button involved, to confirm
-  the one-shot `DeviceActivitySchedule` callback fires without any user action.
+  own, app closed, no debug button — showed neither Broke nor the target app blocked
+  once it expired. Two explanations, not yet distinguished: the schedule's window had
+  already closed by then (correct behavior, nothing to re-block), or the one-shot
+  activity genuinely failed to fire. Hardened regardless: `scheduleWakeUp` now uses
+  minute precision instead of seconds (see Design), and returning to the foreground
+  runs `ScheduleManager.sync` as a self-healing check independent of whether the
+  background callback fired. Retest to confirm which explanation it was.
 - [x] The manual toggle can't touch a schedule's shield through the UI: `scanTag`
 
-  checks `SharedStore.activeBlockingScheduleNames()` before deciding what a tap does,
+  checks `SharedStore.activeBlockingSchedules()` before deciding what a tap does,
   and takes the suspend branch whenever a schedule is active — `appBlocker.toggleBlocking`
   is only reachable when no schedule is blocking, so there's no user-reachable path
   where a manual toggle runs during an active schedule block.
