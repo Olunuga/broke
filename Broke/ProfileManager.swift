@@ -23,16 +23,13 @@ class ProfileManager: ObservableObject {
     }
     
     func loadProfiles() {
-        if let savedProfiles = SharedStore.defaults.data(forKey: "savedProfiles"),
-           let decodedProfiles = try? JSONDecoder().decode([Profile].self, from: savedProfiles) {
-            profiles = decodedProfiles
-        } else {
-            // Create a default profile if no profiles are saved
+        profiles = SharedStore.loadProfiles()
+        if profiles.isEmpty {
             let defaultProfile = Profile(name: "Default", appTokens: [], categoryTokens: [], icon: "bell.slash")
             profiles = [defaultProfile]
             currentProfileId = defaultProfile.id
         }
-        
+
         if let savedProfileId = SharedStore.defaults.string(forKey: "currentProfileId"),
            let uuid = UUID(uuidString: savedProfileId) {
             currentProfileId = uuid
@@ -42,11 +39,9 @@ class ProfileManager: ObservableObject {
             NSLog("No stored ID, using \(currentProfileId?.uuidString ?? "NONE")")
         }
     }
-    
+
     func saveProfiles() {
-        if let encoded = try? JSONEncoder().encode(profiles) {
-            SharedStore.defaults.set(encoded, forKey: "savedProfiles")
-        }
+        SharedStore.saveProfiles(profiles)
         SharedStore.defaults.set(currentProfileId?.uuidString, forKey: "currentProfileId")
     }
     
@@ -159,6 +154,7 @@ class ProfileManager: ObservableObject {
         guard let index = profiles.firstIndex(where: { $0.id == id }) else { return }
         profiles[index].schedules.append(schedule)
         saveProfiles()
+        ScheduleManager.sync(profiles: profiles)
     }
 
     func updateSchedule(_ schedule: Schedule, inProfileWithId id: UUID) {
@@ -166,12 +162,14 @@ class ProfileManager: ObservableObject {
               let scheduleIndex = profiles[profileIndex].schedules.firstIndex(where: { $0.id == schedule.id }) else { return }
         profiles[profileIndex].schedules[scheduleIndex] = schedule
         saveProfiles()
+        ScheduleManager.sync(profiles: profiles)
     }
 
     func deleteSchedule(withId scheduleId: UUID, fromProfileWithId id: UUID) {
         guard let index = profiles.firstIndex(where: { $0.id == id }) else { return }
         profiles[index].schedules.removeAll { $0.id == scheduleId }
         saveProfiles()
+        ScheduleManager.sync(profiles: profiles)
     }
 
     private func ensureDefaultProfile() {
@@ -188,49 +186,5 @@ class ProfileManager: ObservableObject {
             }
             saveProfiles()
         }
-    }
-}
-
-struct Profile: Identifiable, Codable {
-    let id: UUID
-    var name: String
-    var appTokens: Set<ApplicationToken>
-    var categoryTokens: Set<ActivityCategoryToken>
-    var webDomainTokens: Set<WebDomainToken>
-    var schedules: [Schedule]
-    var icon: String // New property for icon
-
-    var isDefault: Bool {
-        name == "Default"
-    }
-
-    // New initializer to support default icon
-    init(
-        name: String,
-        appTokens: Set<ApplicationToken>,
-        categoryTokens: Set<ActivityCategoryToken>,
-        webDomainTokens: Set<WebDomainToken> = [],
-        schedules: [Schedule] = [],
-        icon: String = "bell.slash"
-    ) {
-        self.id = UUID()
-        self.name = name
-        self.appTokens = appTokens
-        self.categoryTokens = categoryTokens
-        self.webDomainTokens = webDomainTokens
-        self.schedules = schedules
-        self.icon = icon
-    }
-
-    // Profiles saved before webDomainTokens/schedules existed have no such keys.
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        id = try container.decode(UUID.self, forKey: .id)
-        name = try container.decode(String.self, forKey: .name)
-        appTokens = try container.decode(Set<ApplicationToken>.self, forKey: .appTokens)
-        categoryTokens = try container.decode(Set<ActivityCategoryToken>.self, forKey: .categoryTokens)
-        webDomainTokens = try container.decodeIfPresent(Set<WebDomainToken>.self, forKey: .webDomainTokens) ?? []
-        schedules = try container.decodeIfPresent([Schedule].self, forKey: .schedules) ?? []
-        icon = try container.decode(String.self, forKey: .icon)
     }
 }

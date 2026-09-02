@@ -15,7 +15,9 @@ struct BrokeApp: App {
     init() {
         SharedStore.migrateFromStandardDefaultsIfNeeded()
         _appBlocker = StateObject(wrappedValue: AppBlocker())
-        _profileManager = StateObject(wrappedValue: ProfileManager())
+        let manager = ProfileManager()
+        _profileManager = StateObject(wrappedValue: manager)
+        ScheduleManager.sync(profiles: manager.profiles)
     }
 
     var body: some Scene {

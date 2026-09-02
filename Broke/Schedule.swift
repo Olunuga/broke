@@ -4,6 +4,8 @@
 //
 
 import Foundation
+import DeviceActivity
+import ManagedSettings
 
 enum ScheduleMode: String, Codable, CaseIterable, Identifiable {
     case block
@@ -74,5 +76,49 @@ struct Schedule: Codable, Identifiable, Equatable {
 
     var isValid: Bool {
         !weekdays.isEmpty && durationMinutes >= Schedule.minimumDurationMinutes
+    }
+
+    // MARK: - Activity and store identity
+
+    /// Each schedule owns its own `DeviceActivityName` and `ManagedSettingsStore`,
+    /// keyed by id. A separate named store per schedule means a schedule's shield
+    /// composes with every other store (the manual toggle's, other schedules') rather
+    /// than overwriting them — `ManagedSettingsStore` settings from different stores
+    /// are combined by the system, not last-write-wins.
+    var activityName: DeviceActivityName {
+        DeviceActivityName(id.uuidString)
+    }
+
+    var storeName: ManagedSettingsStore.Name {
+        ManagedSettingsStore.Name(id.uuidString)
+    }
+
+    // MARK: - Scheduling logic (shared by ScheduleManager and the monitor extension)
+
+    func isActiveToday(referenceDate: Date = Date(), calendar: Calendar = .current) -> Bool {
+        weekdays.contains(calendar.component(.weekday, from: referenceDate))
+    }
+
+    func isWithinWindow(referenceDate: Date = Date(), calendar: Calendar = .current) -> Bool {
+        let now = calendar.dateComponents([.hour, .minute], from: referenceDate)
+        let nowMinutes = (now.hour ?? 0) * 60 + (now.minute ?? 0)
+        let startMinutes = (startTime.hour ?? 0) * 60 + (startTime.minute ?? 0)
+        let endMinutes = (endTime.hour ?? 0) * 60 + (endTime.minute ?? 0)
+        return nowMinutes >= startMinutes && nowMinutes < endMinutes
+    }
+
+    /// Whether this schedule's window is open right now: today is a scheduled day,
+    /// and the current time falls inside the start/end window.
+    func isUsable(referenceDate: Date = Date(), calendar: Calendar = .current) -> Bool {
+        isActiveToday(referenceDate: referenceDate, calendar: calendar)
+            && isWithinWindow(referenceDate: referenceDate, calendar: calendar)
+    }
+
+    /// Whether this schedule wants its profile blocked right now, independent of
+    /// `isEnabled` and any NFC suspension — callers layer those in separately.
+    /// `.block` blocks exactly during the window; `.allow` blocks everywhere else.
+    func wantsBlock(referenceDate: Date = Date(), calendar: Calendar = .current) -> Bool {
+        let usable = isUsable(referenceDate: referenceDate, calendar: calendar)
+        return mode == .block ? usable : !usable
     }
 }

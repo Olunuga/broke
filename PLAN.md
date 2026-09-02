@@ -11,16 +11,26 @@ A `DeviceActivityMonitor` app extension applies and removes the shield while the
 main app is not running. The app alone cannot do this.
 
 - **One `DeviceActivityName` per schedule**, with a daily repeating interval. The
-  extension filters by weekday inside `intervalDidStart`. Activity count equals the
-  number of schedules, which stays well below the `excessiveActivities` limit.
+extension filters by weekday inside `intervalDidStart`. Activity count equals the
+number of schedules, which stays well below the `excessiveActivities` limit.
 - **A budget is a `DeviceActivityEvent`** on the same activity, with
-  `threshold: DateComponents(minute: n)`. Thresholds reset at each interval start, so
-  a daily interval gives a per-day budget.
+`threshold: DateComponents(minute: n)`. Thresholds reset at each interval start, so
+a daily interval gives a per-day budget.
 - **An App Group carries state** between app and extension: profiles, active profile
-  ID, and the suspension date. The shield uses `ManagedSettingsStore(named: "broke")`
-  so both processes write the same store.
+ID, and the suspension date.
+- **Each schedule owns its own named `ManagedSettingsStore`**, keyed by the
+schedule's id. The manual tag-toggle keeps its own separate `"broke"`-named store.
+`ManagedSettingsStore` settings from different stores are combined by the system, not
+last-write-wins, so a schedule's shield can never stomp the manual toggle's or another
+schedule's.
+- **Both `intervalDidStart` and `intervalDidEnd` recompute full state from scratch**
+rather than assume which edge fired. `DeviceActivitySchedule` has no weekday
+parameter — it only fires daily at a fixed start/end time-of-day — so the extension
+re-checks `weekdays`, `isEnabled`, and suspension on every callback and applies or
+clears the shield accordingly. This is also why a schedule's shield is applied
+immediately on save rather than waiting for the next boundary.
 - **The NFC tag writes a suspension date** of the next midnight. The extension reads
-  it before it applies any shield.
+it before it applies any shield.
 
 ### Data model
 
@@ -47,13 +57,18 @@ Example: usable Wednesday to Saturday, 30 minutes maximum. One schedule, mode
 
 ### Mode behaviour
 
-| Mode | `intervalDidStart` | `eventDidReachThreshold` | `intervalDidEnd` |
-|---|---|---|---|
-| `.block` | apply shield | - | remove shield |
-| `.allow` | remove shield | apply shield | apply shield |
+A schedule is "usable" at a given moment when today is one of its `weekdays` and the
+current time falls inside `startTime`–`endTime`. `.block` blocks exactly while usable;
+`.allow` blocks everywhere else, including days not in `weekdays`.
 
-An `.allow` schedule also needs the shield applied when the schedule is saved, so
-that time outside the window is blocked from the start.
+| Mode     | Blocked when |
+| -------- | ------------ |
+| `.block` | usable        |
+| `.allow` | not usable    |
+
+This is recomputed on every `intervalDidStart`/`intervalDidEnd` callback and applied
+immediately when a schedule is saved, so an `.allow` schedule blocks from the moment
+it exists, not only after its first boundary.
 
 Set `includesPastActivity: true` on the event. Without it a budget restarts if
 monitoring re-registers mid-window.
@@ -73,10 +88,11 @@ monitoring re-registers mid-window.
 
 No user-visible change. Confirm blocking still works before continuing.
 
-- [x] **you** Signing & Capabilities > + Capability > App Groups > `group.com.Brokeest.ios`
+- [x] **you** Signing &amp; Capabilities &gt; + Capability &gt; App Groups &gt; `group.com.Brokeest.ios`
 - [x] Add `com.apple.security.application-groups` to `Broke/Broke.entitlements`
 - [x] New `Broke/SharedStore.swift`: group `UserDefaults`, named `ManagedSettingsStore`,
-      suspension date, one-time migration from `UserDefaults.standard`
+
+  suspension date, one-time migration from `UserDefaults.standard`
 - [x] `ProfileManager` reads and writes the group defaults
 - [x] `AppBlocker` uses the named store; `BrokeApp.init` runs the migration first
 - [x] **you** Run, confirm existing profiles survive and blocking still works
@@ -88,8 +104,9 @@ No user-visible change. Confirm blocking still works before continuing.
 - [x] `AppBlocker` sets and clears `store.shield.webDomains`
 - [x] **you** Pick a website in the picker, confirm Safari shows the shield
 - [x] **you** Test the same domain in Chrome. Blocked, and confirms the Shield
-      Configuration extension in phase 7 is needed to close the passcode override on
-      the block screen.
+
+  Configuration extension in phase 7 is needed to close the passcode override on
+  the block screen.
 
 ### Phase 3 — schedule model and UI
 
@@ -98,30 +115,46 @@ Persisted but not yet active.
 - [x] New `Broke/Schedule.swift`
 - [x] `Profile` gains `schedules`
 - [x] `ScheduleListView` and `ScheduleFormView` (weekday toggles, two `.hourAndMinute`
-      pickers, budget stepper)
+
+  pickers, budget stepper)
 - [x] Form validation: reject intervals under 15 minutes, reject windows that cross
-      midnight
+
+  midnight
 - [ ] **you** Run, open a profile, add a schedule, confirm it saves and reopens with
-      the same values. Try an invalid window (end before start, or under 15 minutes)
-      and confirm Save stays disabled with the error shown.
+
+  the same values. Try an invalid window (end before start, or under 15 minutes)
+  and confirm Save stays disabled with the error shown.
 
 ### Phase 4 — monitor extension
 
 Window transitions work at the end of this phase.
 
 - [x] `BrokeMonitor` target: Family Controls and App Group entitlements, team
-      `CH4P23R94R`, embedded into the app via a Copy Files build phase, wired as a
-      target dependency so it builds before the app. The `.appex` lands in
-      `Broke.app/PlugIns` with `NSExtensionPrincipalClass` resolving to
-      `BrokeMonitor.DeviceActivityMonitorExtension`.
-- [ ] **you** Open the project in Xcode once and confirm Signing & Capabilities shows
-      Family Controls and the App Group on the `BrokeMonitor` target with no signing
-      errors.
-- [ ] `BrokeMonitor/DeviceActivityMonitorExtension.swift` currently has empty
-      `intervalDidStart`/`intervalDidEnd`/`eventDidReachThreshold` overrides. Next:
-      weekday filter, shield apply/remove, suspension check.
-- [ ] `Broke/ScheduleManager.swift`: `startMonitoring` and `stopMonitoring`
-- [ ] Apply the shield on save for `.allow` schedules
+
+  `CH4P23R94R`, embedded into the app via a Copy Files build phase, wired as a
+  target dependency so it builds before the app. The `.appex` lands in
+  `Broke.app/PlugIns` with `NSExtensionPrincipalClass` resolving to
+  `BrokeMonitor.DeviceActivityMonitorExtension`.
+- [x] **you** Confirmed Signing &amp; Capabilities shows Family Controls and the App
+
+  Group on the `BrokeMonitor` target with no signing errors.
+- [x] `BrokeMonitor/DeviceActivityMonitorExtension.swift`: `intervalDidStart` and
+
+  `intervalDidEnd` both call `applyState`, which decodes the schedule from the
+  activity name via `SharedStore.schedule(withId:)`, then applies or clears that
+  schedule's own named store via `ShieldWriter` based on `isEnabled`, suspension, and
+  `schedule.wantsBlock()`.
+- [x] `Broke/ScheduleManager.swift`: `sync(profiles:)` stops all monitoring, restarts
+
+  it for every enabled and valid schedule, applies each schedule's resting shield
+  state immediately, and clears the named store of any schedule id that disappeared
+  since the last sync. Called from `ProfileManager`'s schedule add/update/delete and
+  once at app launch in `BrokeApp.init`.
+- [x] Shield applied on save for both modes, not only `.allow` &mdash; `ScheduleManager.sync`
+
+  computes `wantsBlock()` for every schedule and applies or clears accordingly, so a
+  freshly created `.block` schedule outside its window is correctly left unblocked
+  rather than needing a separate code path.
 - [ ] **you** Set a window a few minutes ahead, confirm the shield appears and clears
 
 ### Phase 5 — budgets
@@ -130,55 +163,69 @@ Window transitions work at the end of this phase.
 - [ ] Handle `eventDidReachThreshold` by applying the shield
 - [ ] **you** Test the Wednesday-to-Saturday, 30-minute case
 
-### Phase 6 — NFC suspension until midnight
+### Phase 6 — NFC arm/disarm (deferred)
+
+Deferred. The interaction model needs a decision before this is built: whether the
+tag suspends an active scheduled block until midnight (the design below), or instead
+arms and disarms blocking outright, with profile settings locked from editing while
+armed until a tag scan disarms. The items below describe the midnight-suspension
+design; they are not built until this is resolved.
 
 - [ ] A tag scan during a scheduled block writes `suspendedUntil = startOfDay(tomorrow)`
-      and clears the shield
+
+  and clears the shield
 - [ ] The extension skips applying a shield while `Date() < suspendedUntil`
 - [ ] A second scan clears the date and re-applies the shield, keeping the tag a toggle
 - [ ] Main screen shows the suspension state and the next transition time
 
 ### Phase 7 — hardening
 
-- [ ] **you** Set a Screen Time passcode you do not know yourself (Settings > Screen
-      Time > Use Screen Time Passcode). Every item below, and every restriction Broke
-      sets through `ManagedSettings`, is gated by this passcode. Without it, Settings >
-      Screen Time > Broke lets you revoke authorization or undo any restriction with no
-      barrier at all.
+- [ ] **you** Set a Screen Time passcode you do not know yourself (Settings &gt; Screen
+
+  Time &gt; Use Screen Time Passcode). Every item below, and every restriction Broke
+  sets through `ManagedSettings`, is gated by this passcode. Without it, Settings &gt;
+  Screen Time &gt; Broke lets you revoke authorization or undo any restriction with no
+  barrier at all.
 - [ ] Shield Configuration extension (`ShieldConfigurationDataSource`, covering both
-      `configuration(shielding: Application)` and `configuration(shielding: WebDomain)`)
-      to replace the default system block screen. The default screen carries a built-in
-      "unlock with Screen Time passcode" affordance for both apps and websites — Broke's
-      own screen removes that option, or replaces it with the NFC tag as the only way
-      through. This is the actual fix for the Screen Time passcode override on blocked
-      websites, and it applies with or without the passcode item above.
+
+  `configuration(shielding: Application)` and `configuration(shielding: WebDomain)`)
+  to replace the default system block screen. The default screen carries a built-in
+  "unlock with Screen Time passcode" affordance for both apps and websites — Broke's
+  own screen removes that option, or replaces it with the NFC tag as the only way
+  through. This is the actual fix for the Screen Time passcode override on blocked
+  websites, and it applies with or without the passcode item above.
 - [ ] `store.application.denyAppRemoval = true`
 - [ ] `store.dateAndTime.requireAutomaticDateAndTime = true`
 - [ ] `store.account.lockAccounts = true` and `store.passcode.lockPasscode = true`
 - [ ] `store.siri.denySiri = true`
 - [ ] `store.webContent.blockedByFilter = .all(except:)` as an opt-in allowlist per profile
-- [ ] Require a tag scan before a schedule is edited or deleted while blocking is active
+- [ ] Require a tag scan before any profile setting (schedules included) can be edited
+
+  or deleted while blocking is active — the arm/disarm model from phase 6.
 - [ ] Replace the fixed tag phrase (`Broke/BrockerView.swift:17`) with a random
-      per-install secret. Store its hash in the Keychain and write the secret to the tag.
+
+  per-install secret. Store its hash in the Keychain and write the secret to the tag.
 - [ ] **you** Re-write the existing tag, because the old phrase stops working
 
 ### Deferred
 
 - [ ] `.child` authorization in place of `.individual`. It is the only way to stop
-      revocation in Settings > Screen Time, and it needs Family Sharing with a second
-      Apple ID.
+
+  revocation in Settings &gt; Screen Time, and it needs Family Sharing with a second
+  Apple ID.
 
 ## Limits
 
 - Every restriction Broke sets through `ManagedSettings` is only as strong as the
-  device's Screen Time passcode. With no passcode set, Settings > Screen Time > Broke
-  lets any restriction be undone with no barrier, and Screen Time override prompts
-  (such as a blocked website's) let content through unchecked.
+device's Screen Time passcode. With no passcode set, Settings &gt; Screen Time &gt; Broke
+lets any restriction be undone with no barrier, and Screen Time override prompts
+(such as a blocked website's) let content through unchecked.
 - `denyAppRemoval` stops deletion of every app on the device, not only Broke.
-- `.individual` authorization stays revocable in Settings > Screen Time, passcode
-  permitting.
+- `.individual` authorization stays revocable in Settings &gt; Screen Time, passcode
+permitting.
 - Extension callbacks arrive within a few minutes of the boundary, not at the exact
-  second. A 30-minute budget can overrun slightly.
+second. A 30-minute budget can overrun slightly.
 - `DeviceActivityCenter` rejects intervals under 15 minutes with `intervalTooShort`.
 - A window that crosses midnight must be split into two schedules.
 - Extension callbacks do not fire in the simulator.
+

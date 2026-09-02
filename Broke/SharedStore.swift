@@ -28,6 +28,48 @@ enum SharedStore {
         static let isBlocking = "isBlocking"
         static let suspendedUntil = "suspendedUntil"
         static let didMigrateFromStandardDefaults = "didMigrateFromStandardDefaults"
+        static let knownScheduleIds = "knownScheduleIds"
+    }
+
+    // MARK: - Profiles
+
+    static func loadProfiles() -> [Profile] {
+        guard let data = defaults.data(forKey: Key.savedProfiles),
+              let profiles = try? JSONDecoder().decode([Profile].self, from: data) else {
+            return []
+        }
+        return profiles
+    }
+
+    static func saveProfiles(_ profiles: [Profile]) {
+        guard let encoded = try? JSONEncoder().encode(profiles) else { return }
+        defaults.set(encoded, forKey: Key.savedProfiles)
+    }
+
+    /// Finds the schedule with `scheduleId` across every profile, along with the
+    /// profile that owns it. Used by the extension, which only has a schedule's id
+    /// (from `DeviceActivityName`) and needs the profile's tokens to shield.
+    static func schedule(withId scheduleId: UUID) -> (profile: Profile, schedule: Schedule)? {
+        for profile in loadProfiles() {
+            if let schedule = profile.schedules.first(where: { $0.id == scheduleId }) {
+                return (profile, schedule)
+            }
+        }
+        return nil
+    }
+
+    // MARK: - Known schedule ids
+
+    /// Schedule ids seen as of the last `ScheduleManager.sync`. Used to detect
+    /// schedules that were deleted since, whose named `ManagedSettingsStore` would
+    /// otherwise keep whatever shield state it last had forever.
+    static func knownScheduleIds() -> Set<UUID> {
+        guard let strings = defaults.array(forKey: Key.knownScheduleIds) as? [String] else { return [] }
+        return Set(strings.compactMap(UUID.init))
+    }
+
+    static func setKnownScheduleIds(_ ids: Set<UUID>) {
+        defaults.set(ids.map { $0.uuidString }, forKey: Key.knownScheduleIds)
     }
 
     // MARK: - Suspension (NFC early unblock, phase 6)
