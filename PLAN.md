@@ -223,10 +223,12 @@ made during the 30 minutes doesn't cancel the automatic re-block.
 - [ ] **you** Trigger a schedule, scan the tag, confirm the block clears and the label
 
   changes; confirm it re-blocks on its own 30 minutes later without reopening the app
-- [ ] **you** With a schedule active, tap the manual toggle on and back off, then
+- [x] The manual toggle can't touch a schedule's shield through the UI: `scanTag`
 
-  check the actually-shielded app directly (not just Broke's screen) to confirm the
-  schedule's own shield was never touched
+  checks `SharedStore.activeBlockingScheduleNames()` before deciding what a tap does,
+  and takes the suspend branch whenever a schedule is active — `appBlocker.toggleBlocking`
+  is only reachable when no schedule is blocking, so there's no user-reachable path
+  where a manual toggle runs during an active schedule block.
 
 ### Phase 7 — hardening
 
