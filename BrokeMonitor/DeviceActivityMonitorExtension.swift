@@ -12,6 +12,7 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
         super.intervalDidStart(for: activity)
         guard activity != SharedStore.resumeCheckActivityName else { return }
         applyState(for: activity)
+        HardeningManager.refresh()
     }
 
     override func intervalDidEnd(for activity: DeviceActivityName) {
@@ -24,6 +25,7 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
         } else {
             applyState(for: activity)
         }
+        HardeningManager.refresh()
     }
 
     override func eventDidReachThreshold(_ event: DeviceActivityEvent.Name, activity: DeviceActivityName) {
@@ -40,6 +42,7 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
         // clears, at the schedule's own next intervalDidStart — no separate reset
         // logic needed.
         ShieldWriter.apply(profile, to: ManagedSettingsStore(named: schedule.storeName))
+        HardeningManager.refresh()
     }
 
     /// Neither callback says which edge fired, and a schedule only runs on some

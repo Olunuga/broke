@@ -14,6 +14,10 @@ struct Profile: Identifiable, Codable {
     var webDomainTokens: Set<WebDomainToken>
     var schedules: [Schedule]
     var icon: String
+    /// When true, `webDomainTokens` is treated as the only web content allowed —
+    /// everything else is blocked — instead of the default deny-list meaning (only
+    /// those domains are blocked, everything else is allowed).
+    var restrictWebToAllowlist: Bool
 
     var isDefault: Bool {
         name == "Default"
@@ -25,6 +29,7 @@ struct Profile: Identifiable, Codable {
         categoryTokens: Set<ActivityCategoryToken>,
         webDomainTokens: Set<WebDomainToken> = [],
         schedules: [Schedule] = [],
+        restrictWebToAllowlist: Bool = false,
         icon: String = "bell.slash"
     ) {
         self.id = UUID()
@@ -33,10 +38,12 @@ struct Profile: Identifiable, Codable {
         self.categoryTokens = categoryTokens
         self.webDomainTokens = webDomainTokens
         self.schedules = schedules
+        self.restrictWebToAllowlist = restrictWebToAllowlist
         self.icon = icon
     }
 
-    // Profiles saved before webDomainTokens/schedules existed have no such keys.
+    // Profiles saved before webDomainTokens/schedules/restrictWebToAllowlist existed
+    // have no such keys.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
@@ -45,6 +52,7 @@ struct Profile: Identifiable, Codable {
         categoryTokens = try container.decode(Set<ActivityCategoryToken>.self, forKey: .categoryTokens)
         webDomainTokens = try container.decodeIfPresent(Set<WebDomainToken>.self, forKey: .webDomainTokens) ?? []
         schedules = try container.decodeIfPresent([Schedule].self, forKey: .schedules) ?? []
+        restrictWebToAllowlist = try container.decodeIfPresent(Bool.self, forKey: .restrictWebToAllowlist) ?? false
         icon = try container.decode(String.self, forKey: .icon)
     }
 }

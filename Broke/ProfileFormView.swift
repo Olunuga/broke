@@ -16,17 +16,19 @@ struct ProfileFormView: View {
     @State private var showSymbolsPicker = false
     @State private var showAppSelection = false
     @State private var activitySelection: FamilyActivitySelection
+    @State private var restrictWebToAllowlist: Bool
     @State private var showDeleteConfirmation = false
     let profile: Profile?
     let onDismiss: () -> Void
-    
+
     init(profile: Profile? = nil, profileManager: ProfileManager, onDismiss: @escaping () -> Void) {
         self.profile = profile
         self.profileManager = profileManager
         self.onDismiss = onDismiss
         _profileName = State(initialValue: profile?.name ?? "")
         _profileIcon = State(initialValue: profile?.icon ?? "bell.slash")
-        
+        _restrictWebToAllowlist = State(initialValue: profile?.restrictWebToAllowlist ?? false)
+
         var selection = FamilyActivitySelection()
         selection.applicationTokens = profile?.appTokens ?? []
         selection.categoryTokens = profile?.categoryTokens ?? []
@@ -92,6 +94,13 @@ struct ProfileFormView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
+
+                    Toggle("Restrict web to allowed sites only", isOn: $restrictWebToAllowlist)
+                    Text(restrictWebToAllowlist
+                         ? "Only the websites above are reachable. Everything else is blocked."
+                         : "The websites above are blocked. Everything else is reachable.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
                 
                 if let profile {
@@ -160,6 +169,7 @@ struct ProfileFormView: View {
                 appTokens: activitySelection.applicationTokens,
                 categoryTokens: activitySelection.categoryTokens,
                 webDomainTokens: activitySelection.webDomainTokens,
+                restrictWebToAllowlist: restrictWebToAllowlist,
                 icon: profileIcon
             )
         } else {
@@ -168,6 +178,7 @@ struct ProfileFormView: View {
                 appTokens: activitySelection.applicationTokens,
                 categoryTokens: activitySelection.categoryTokens,
                 webDomainTokens: activitySelection.webDomainTokens,
+                restrictWebToAllowlist: restrictWebToAllowlist,
                 icon: profileIcon
             )
             profileManager.addProfile(newProfile: newProfile)

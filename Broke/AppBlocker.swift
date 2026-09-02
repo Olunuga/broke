@@ -52,6 +52,7 @@ class AppBlocker: ObservableObject {
         } else {
             ShieldWriter.clear(store)
         }
+        HardeningManager.refresh()
     }
     
     private func loadBlockingState() {

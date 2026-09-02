@@ -8,9 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		B9A4E3EBDD5168920C21CCF5 /* DeviceActivityMonitorExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 858662BEED185FCBAFC5A52B /* DeviceActivityMonitorExtension.swift */; };
+		A88A3BD7D28E431145947221 /* HardeningManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C72E35BD24624AF58CB2D55 /* HardeningManager.swift */; };
 		8FEAC78AEC8DAA5BA47A0A97 /* BrokeMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 93C5B49DE5BE6A95E2A8785F /* BrokeMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeaderOnCopy, ); }; };
 		F51C38D22C775953003B4EB3 /* CoreNFC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F51C38D02C77594E003B4EB3 /* CoreNFC.framework */; };
 		F51C38D72C775CAF003B4EB3 /* AppBlocker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F51C38D62C775CAF003B4EB3 /* AppBlocker.swift */; };
+		E13628B3C13B89ACF2419860 /* HardeningManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C72E35BD24624AF58CB2D55 /* HardeningManager.swift */; };
 		ED5D0EBC764E5CF760E39BC0 /* Profile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9976FA2DFF294F1EBE649B1F /* Profile.swift */; };
 		295ECB6EC29FA2D4B65A286E /* ShieldWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBE991B90E83B062B0BF63BC /* ShieldWriter.swift */; };
 		304A17070A350894626CE9E7 /* ScheduleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45D98B3F1210525A22609960 /* ScheduleManager.swift */; };
@@ -73,6 +75,7 @@
 		F51C38D02C77594E003B4EB3 /* CoreNFC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreNFC.framework; path = System/Library/Frameworks/CoreNFC.framework; sourceTree = SDKROOT; };
 		F51C38D52C775AAF003B4EB3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F51C38D62C775CAF003B4EB3 /* AppBlocker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlocker.swift; sourceTree = "<group>"; };
+		4C72E35BD24624AF58CB2D55 /* HardeningManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HardeningManager.swift; sourceTree = "<group>"; };
 		9976FA2DFF294F1EBE649B1F /* Profile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Profile.swift; sourceTree = "<group>"; };
 		DBE991B90E83B062B0BF63BC /* ShieldWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShieldWriter.swift; sourceTree = "<group>"; };
 		45D98B3F1210525A22609960 /* ScheduleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleManager.swift; sourceTree = "<group>"; };
@@ -150,6 +153,7 @@
 				F51C38DA2C775D0B003B4EB3 /* BrockerView.swift */,
 				F51C38D82C775CEC003B4EB3 /* NfcReader.swift */,
 				F51C38D62C775CAF003B4EB3 /* AppBlocker.swift */,
+				4C72E35BD24624AF58CB2D55 /* HardeningManager.swift */,
 				9976FA2DFF294F1EBE649B1F /* Profile.swift */,
 				DBE991B90E83B062B0BF63BC /* ShieldWriter.swift */,
 				45D98B3F1210525A22609960 /* ScheduleManager.swift */,
@@ -295,6 +299,7 @@
 				F5A3B05F2C733E3400BD6C7F /* BrokeApp.swift in Sources */,
 				F51C38E82C78ADB5003B4EB3 /* ProfilePicker.swift in Sources */,
 				F51C38D72C775CAF003B4EB3 /* AppBlocker.swift in Sources */,
+				E13628B3C13B89ACF2419860 /* HardeningManager.swift in Sources */,
 				ED5D0EBC764E5CF760E39BC0 /* Profile.swift in Sources */,
 				295ECB6EC29FA2D4B65A286E /* ShieldWriter.swift in Sources */,
 				304A17070A350894626CE9E7 /* ScheduleManager.swift in Sources */,
@@ -310,6 +315,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B9A4E3EBDD5168920C21CCF5 /* DeviceActivityMonitorExtension.swift in Sources */,
+				A88A3BD7D28E431145947221 /* HardeningManager.swift in Sources */,
 				EA01F89446722DEB0EB20ED6 /* Schedule.swift in Sources */,
 				F351B60440616A6E2A082D41 /* SharedStore.swift in Sources */,
 				BDA7027BAF2E684A6DE07B3F /* ShieldWriter.swift in Sources */,

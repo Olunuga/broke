@@ -108,6 +108,17 @@ enum SharedStore {
         !activeBlockingSchedules().isEmpty
     }
 
+    static var isManuallyBlocking: Bool {
+        defaults.bool(forKey: Key.isBlocking)
+    }
+
+    /// Whether anything — the manual toggle or a schedule — is blocking right now.
+    /// Drives device-level restrictions in `HardeningManager`, which apply while
+    /// something is blocked and lift once nothing is.
+    static var isAnythingBlocking: Bool {
+        isManuallyBlocking || isAnyScheduleBlocking()
+    }
+
     // MARK: - One-time migration from UserDefaults.standard
 
     /// Earlier versions stored profiles and blocking state in `UserDefaults.standard`,

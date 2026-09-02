@@ -121,6 +121,7 @@ class ProfileManager: ObservableObject {
         appTokens: Set<ApplicationToken>? = nil,
         categoryTokens: Set<ActivityCategoryToken>? = nil,
         webDomainTokens: Set<WebDomainToken>? = nil,
+        restrictWebToAllowlist: Bool? = nil,
         icon: String? = nil
     ) {
         if let index = profiles.firstIndex(where: { $0.id == id }) {
@@ -135,6 +136,9 @@ class ProfileManager: ObservableObject {
             }
             if let webDomainTokens = webDomainTokens {
                 profiles[index].webDomainTokens = webDomainTokens
+            }
+            if let restrictWebToAllowlist = restrictWebToAllowlist {
+                profiles[index].restrictWebToAllowlist = restrictWebToAllowlist
             }
             if let icon = icon {
                 profiles[index].icon = icon

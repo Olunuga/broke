@@ -56,6 +56,8 @@ enum ScheduleManager {
         if SharedStore.isSuspended, let suspendedUntil = SharedStore.suspendedUntil {
             scheduleWakeUp(at: suspendedUntil)
         }
+
+        HardeningManager.refresh()
     }
 
     /// Suspends every schedule's block for `duration`, effective immediately, and

@@ -261,11 +261,26 @@ made during the 30 minutes doesn't cancel the automatic re-block.
   own screen removes that option, or replaces it with the NFC tag as the only way
   through. This is the actual fix for the Screen Time passcode override on blocked
   websites, and it applies with or without the passcode item above.
-- [ ] `store.application.denyAppRemoval = true`
-- [ ] `store.dateAndTime.requireAutomaticDateAndTime = true`
-- [ ] `store.account.lockAccounts = true` and `store.passcode.lockPasscode = true`
-- [ ] `store.siri.denySiri = true`
-- [ ] `store.webContent.blockedByFilter = .all(except:)` as an opt-in allowlist per profile
+- [x] New `HardeningManager`, dual-target like `Schedule`/`SharedStore`/`ShieldWriter`.
+
+  `refresh()` reads `SharedStore.isAnythingBlocking` (manual toggle or any schedule)
+  and sets or clears `denyAppRemoval`, `requireAutomaticDateAndTime`, `lockAccounts`,
+  `lockPasscode`, and `denySiri` together on a dedicated `"broke-hardening"` named
+  store — active exactly while something is blocking, off otherwise. Called from
+  `AppBlocker.applyBlockingSettings`, `ScheduleManager.sync`, and all three of the
+  extension's callbacks, so every path that can change what's blocking keeps it in
+  sync.
+- [x] `store.webContent.blockedByFilter` as an opt-in per-profile allowlist —
+
+  `Profile.restrictWebToAllowlist`. When on, the profile's existing `webDomainTokens`
+  switch meaning from "these are blocked" to "only these are reachable, block
+  everything else" (`.all(except:)`); when off, unchanged deny-list behavior.
+  Toggle lives in `ProfileFormView` next to the website configuration.
+- [ ] **you** Test both: with a schedule active, confirm Settings > Screen Time shows
+
+  the app-removal/passcode/accounts/date-time/Siri restrictions active, and gone once
+  nothing is blocking. Turn on the web allowlist for a profile with one or two sites
+  selected, block it, and confirm only those sites load.
 - [ ] Require a tag scan before any profile setting (schedules included) can be edited
 
   or deleted while blocking is active — the arm/disarm model from phase 6.
