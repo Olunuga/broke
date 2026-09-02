@@ -9,9 +9,15 @@ import SwiftUI
 
 @main
 struct BrokeApp: App {
-    @StateObject private var appBlocker = AppBlocker()
-    @StateObject private var profileManager = ProfileManager()
-    
+    @StateObject private var appBlocker: AppBlocker
+    @StateObject private var profileManager: ProfileManager
+
+    init() {
+        SharedStore.migrateFromStandardDefaultsIfNeeded()
+        _appBlocker = StateObject(wrappedValue: AppBlocker())
+        _profileManager = StateObject(wrappedValue: ProfileManager())
+    }
+
     var body: some Scene {
         WindowGroup {
             BrokerView()

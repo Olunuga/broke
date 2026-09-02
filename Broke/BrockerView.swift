@@ -18,6 +18,7 @@ struct BrokerView: View {
     
     @State private var showWrongTagAlert = false
     @State private var showCreateTagAlert = false
+    @State private var showWriteResultAlert = false
     @State private var nfcWriteSuccess = false
     
     private var isBlocking : Bool {
@@ -58,7 +59,7 @@ struct BrokerView: View {
             } message: {
                 Text("Do you want to create a new Broker tag?")
             }
-            .alert("Tag Creation", isPresented: $nfcWriteSuccess) {
+            .alert("Tag Creation", isPresented: $showWriteResultAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(nfcWriteSuccess ? "Broker tag created successfully!" : "Failed to create Broker tag. Please try again.")
@@ -115,8 +116,9 @@ struct BrokerView: View {
     
     private func createBrokerTag() {
         nfcReader.write(tagPhrase) { success in
-            nfcWriteSuccess = !success
+            nfcWriteSuccess = success
             showCreateTagAlert = false
+            showWriteResultAlert = true
         }
     }
 }

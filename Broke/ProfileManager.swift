@@ -23,7 +23,7 @@ class ProfileManager: ObservableObject {
     }
     
     func loadProfiles() {
-        if let savedProfiles = UserDefaults.standard.data(forKey: "savedProfiles"),
+        if let savedProfiles = SharedStore.defaults.data(forKey: "savedProfiles"),
            let decodedProfiles = try? JSONDecoder().decode([Profile].self, from: savedProfiles) {
             profiles = decodedProfiles
         } else {
@@ -33,7 +33,7 @@ class ProfileManager: ObservableObject {
             currentProfileId = defaultProfile.id
         }
         
-        if let savedProfileId = UserDefaults.standard.string(forKey: "currentProfileId"),
+        if let savedProfileId = SharedStore.defaults.string(forKey: "currentProfileId"),
            let uuid = UUID(uuidString: savedProfileId) {
             currentProfileId = uuid
             NSLog("Found currentProfile: \(uuid)")
@@ -45,9 +45,9 @@ class ProfileManager: ObservableObject {
     
     func saveProfiles() {
         if let encoded = try? JSONEncoder().encode(profiles) {
-            UserDefaults.standard.set(encoded, forKey: "savedProfiles")
+            SharedStore.defaults.set(encoded, forKey: "savedProfiles")
         }
-        UserDefaults.standard.set(currentProfileId?.uuidString, forKey: "currentProfileId")
+        SharedStore.defaults.set(currentProfileId?.uuidString, forKey: "currentProfileId")
     }
     
     func addProfile(name: String, icon: String = "bell.slash") {

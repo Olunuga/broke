@@ -9,7 +9,7 @@ import ManagedSettings
 import FamilyControls
 
 class AppBlocker: ObservableObject {
-    let store = ManagedSettingsStore()
+    let store = SharedStore.managedSettingsStore
     @Published var isBlocking = false
     @Published var isAuthorized = false
     
@@ -57,10 +57,10 @@ class AppBlocker: ObservableObject {
     }
     
     private func loadBlockingState() {
-        isBlocking = UserDefaults.standard.bool(forKey: "isBlocking")
+        isBlocking = SharedStore.defaults.bool(forKey: "isBlocking")
     }
     
     private func saveBlockingState() {
-        UserDefaults.standard.set(isBlocking, forKey: "isBlocking")
+        SharedStore.defaults.set(isBlocking, forKey: "isBlocking")
     }
 }
