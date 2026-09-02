@@ -47,6 +47,20 @@ enum ScheduleManager {
         }
 
         SharedStore.setKnownScheduleIds(currentIds)
+
+        // `stopMonitoring()` above clears every activity, including a pending wake-up
+        // from an in-progress suspension. Re-register it so any edit made during a
+        // suspension doesn't silently cancel the automatic re-block.
+        if SharedStore.isSuspended, let suspendedUntil = SharedStore.suspendedUntil {
+            scheduleWakeUp(at: suspendedUntil)
+        }
+    }
+
+    /// Suspends every schedule's block for `duration`, effective immediately, and
+    /// arranges for it to resume automatically when the suspension ends.
+    static func suspendActiveSchedules(for duration: TimeInterval, profiles: [Profile]) {
+        SharedStore.suspendedUntil = Date().addingTimeInterval(duration)
+        sync(profiles: profiles)
     }
 
     private static func startMonitoring(_ schedule: Schedule) {
@@ -60,6 +74,22 @@ enum ScheduleManager {
             try center.startMonitoring(schedule.activityName, during: activitySchedule)
         } catch {
             NSLog("Broke: failed to start monitoring schedule '\(schedule.name)': \(error)")
+        }
+    }
+
+    /// A one-shot `DeviceActivitySchedule` from now until `date`, `repeats: false`, so
+    /// its `intervalDidEnd` fires exactly once, at the suspension's end.
+    private static func scheduleWakeUp(at date: Date) {
+        let calendar = Calendar.current
+        let components: Set<Calendar.Component> = [.year, .month, .day, .hour, .minute, .second]
+        let start = calendar.dateComponents(components, from: Date())
+        let end = calendar.dateComponents(components, from: date)
+        let wakeSchedule = DeviceActivitySchedule(intervalStart: start, intervalEnd: end, repeats: false)
+
+        do {
+            try center.startMonitoring(SharedStore.resumeCheckActivityName, during: wakeSchedule)
+        } catch {
+            NSLog("Broke: failed to schedule resume check: \(error)")
         }
     }
 }

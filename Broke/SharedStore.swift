@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import DeviceActivity
 import ManagedSettings
 
 enum SharedStore {
@@ -19,6 +20,11 @@ enum SharedStore {
     }()
 
     static let managedSettingsStore = ManagedSettingsStore(named: .init("broke"))
+
+    /// One-off activity used to wake the extension when a suspension ends, so the
+    /// shield a schedule cleared for an early unblock gets re-applied without waiting
+    /// for that schedule's own next start/end boundary.
+    static let resumeCheckActivityName = DeviceActivityName("broke-resume-check")
 
     // MARK: - Keys
 
@@ -82,6 +88,18 @@ enum SharedStore {
     static var isSuspended: Bool {
         guard let suspendedUntil else { return false }
         return Date() < suspendedUntil
+    }
+
+    /// Whether any enabled, valid schedule wants its profile blocked right now.
+    /// Drives the home screen's blocked state alongside the manual toggle.
+    static func isAnyScheduleBlocking() -> Bool {
+        guard !isSuspended else { return false }
+        for profile in loadProfiles() {
+            for schedule in profile.schedules where schedule.isEnabled && schedule.isValid {
+                if schedule.wantsBlock() { return true }
+            }
+        }
+        return false
     }
 
     // MARK: - One-time migration from UserDefaults.standard

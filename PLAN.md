@@ -120,7 +120,7 @@ Persisted but not yet active.
 - [x] Form validation: reject intervals under 15 minutes, reject windows that cross
 
   midnight
-- [ ] **you** Run, open a profile, add a schedule, confirm it saves and reopens with
+- [x] **you** Run, open a profile, add a schedule, confirm it saves and reopens with
 
   the same values. Try an invalid window (end before start, or under 15 minutes)
   and confirm Save stays disabled with the error shown.
@@ -163,20 +163,35 @@ Window transitions work at the end of this phase.
 - [ ] Handle `eventDidReachThreshold` by applying the shield
 - [ ] **you** Test the Wednesday-to-Saturday, 30-minute case
 
-### Phase 6 — NFC arm/disarm (deferred)
+### Phase 6 — NFC early unblock
 
-Deferred. The interaction model needs a decision before this is built: whether the
-tag suspends an active scheduled block until midnight (the design below), or instead
-arms and disarms blocking outright, with profile settings locked from editing while
-armed until a tag scan disarms. The items below describe the midnight-suspension
-design; they are not built until this is resolved.
+The home screen tracks two independent shield sources: the manual toggle
+(`appBlocker.isBlocking`) and any currently active schedule (`SharedStore.isAnyScheduleBlocking()`,
+refreshed on appear and on returning to the foreground). It shows blocked if either
+one is, and the block label says which action a tap will take.
 
-- [ ] A tag scan during a scheduled block writes `suspendedUntil = startOfDay(tomorrow)`
+A tag scan while a schedule is the active blocker does not touch the manual toggle —
+it suspends every schedule for 30 minutes (`ScheduleManager.suspendActiveSchedules`),
+which writes `SharedStore.suspendedUntil` and immediately clears the currently-blocking
+schedules' shields via `sync`. A tag scan while nothing is schedule-blocking falls
+through to the pre-existing manual toggle, unchanged.
 
-  and clears the shield
-- [ ] The extension skips applying a shield while `Date() < suspendedUntil`
-- [ ] A second scan clears the date and re-applies the shield, keeping the tag a toggle
-- [ ] Main screen shows the suspension state and the next transition time
+Since a schedule's own start/end boundaries are typically hours apart, nothing else
+fires at the 30-minute mark on its own. `ScheduleManager` registers a one-shot,
+non-repeating `DeviceActivitySchedule` ending exactly at `suspendedUntil`
+(`SharedStore.resumeCheckActivityName`); its `intervalDidEnd` re-evaluates every known
+schedule and re-applies whichever ones `wantsBlock()` again. `sync` re-registers this
+wake-up on every call while a suspension is in progress, so an unrelated schedule edit
+made during the 30 minutes doesn't cancel the automatic re-block.
+
+- [x] Home screen reflects schedule-driven blocking, not just the manual toggle
+- [x] Tag scan during a scheduled block suspends for 30 minutes and clears the shield
+- [x] A one-shot wake-up activity re-applies the shield automatically when the
+
+  suspension ends
+- [ ] **you** Trigger a schedule, scan the tag, confirm the block clears and the label
+
+  changes; confirm it re-blocks on its own 30 minutes later without reopening the app
 
 ### Phase 7 — hardening
 
