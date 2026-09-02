@@ -23,10 +23,25 @@ struct BrokerView: View {
     @State private var showWriteResultAlert = false
     @State private var nfcWriteSuccess = false
     @State private var activeScheduleNames: [String] = []
+    @State private var suspendedUntil: Date?
     private let refreshTimer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
 
     private var isScheduleBlocking: Bool {
         !activeScheduleNames.isEmpty
+    }
+
+    /// A suspension makes `isScheduleBlocking` false the same as "nothing scheduled"
+    /// — this is what lets the screen tell the two apart.
+    private var isSuspended: Bool {
+        guard let suspendedUntil else { return false }
+        return Date() < suspendedUntil
+    }
+
+    private var suspendedUntilLabel: String {
+        guard let suspendedUntil else { return "" }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        return formatter.string(from: suspendedUntil)
     }
 
     /// The manual toggle and any active schedule are independent shield sources; the
@@ -44,6 +59,13 @@ struct BrokerView: View {
 
                         if !isBlocked {
                             Divider()
+
+                            if isSuspended {
+                                Text("Schedules suspended until \(suspendedUntilLabel)")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                                    .padding(.top, 8)
+                            }
 
                             ProfilesPicker(profileManager: profileManager)
                                 .frame(height: geometry.size.height / 2)
@@ -144,6 +166,7 @@ struct BrokerView: View {
 
     private func refreshScheduleBlockingState() {
         activeScheduleNames = SharedStore.activeBlockingScheduleNames()
+        suspendedUntil = SharedStore.suspendedUntil
     }
 
     private func scanTag() {
