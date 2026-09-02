@@ -253,14 +253,21 @@ made during the 30 minutes doesn't cancel the automatic re-block.
   sets through `ManagedSettings`, is gated by this passcode. Without it, Settings &gt;
   Screen Time &gt; Broke lets you revoke authorization or undo any restriction with no
   barrier at all.
-- [ ] Shield Configuration extension (`ShieldConfigurationDataSource`, covering both
+- [x] Two more extension targets, `BrokeShieldConfig` and `BrokeShieldAction`, match
 
-  `configuration(shielding: Application)` and `configuration(shielding: WebDomain)`)
-  to replace the default system block screen. The default screen carries a built-in
-  "unlock with Screen Time passcode" affordance for both apps and websites — Broke's
-  own screen removes that option, or replaces it with the NFC tag as the only way
-  through. This is the actual fix for the Screen Time passcode override on blocked
-  websites, and it applies with or without the passcode item above.
+  the extension point identifiers and protocol signatures in Apple's own Xcode
+  templates (`Shield Configuration Extension.xctemplate` / `Shield Action
+  Extension.xctemplate`). The two work together; neither alone closes the gap.
+  `BrokeShieldConfig` (`ShieldConfigurationDataSource`, all four
+  `configuration(shielding:)` overrides) replaces the default block screen's
+  appearance and omits `secondaryButtonLabel` entirely — that's where the built-in
+  "unlock with Screen Time passcode" option lives. `BrokeShieldAction`
+  (`ShieldActionDelegate`) handles what the remaining button does: `.close` on every
+  case, which dismisses the shield UI without touching the underlying
+  `ManagedSettingsStore`. Neither `ShieldActionResponse` case can trigger a passcode
+  prompt, so together these fully replace it — the Broke tag, scanned in the app, is
+  the only way through. Applies to both apps and websites, and with or without the
+  Screen Time passcode item above.
 - [x] New `HardeningManager`, dual-target like `Schedule`/`SharedStore`/`ShieldWriter`.
 
   `refresh()` reads `SharedStore.isAnythingBlocking` (manual toggle or any schedule)
@@ -295,6 +302,14 @@ made during the 30 minutes doesn't cancel the automatic re-block.
 
   blocking. Left visible, it would let anyone with a blank NFC tag mint a new valid
   one on the spot, making the physical-tag requirement meaningless.
+- [ ] **you** Open the project in Xcode once and confirm Signing &amp; Capabilities
+
+  shows Family Controls on both `BrokeShieldConfig` and `BrokeShieldAction` with no
+  signing errors, same as the `BrokeMonitor` check earlier.
+- [ ] **you** Block an app, background Broke, and open the blocked app directly — the
+
+  new screen should show, with no second button and no passcode prompt available.
+  Repeat for a blocked website in Safari.
 - [ ] Replace the fixed tag phrase (`Broke/BrockerView.swift:17`) with a random
 
   per-install secret. Store its hash in the Keychain and write the secret to the tag.
