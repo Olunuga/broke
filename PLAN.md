@@ -86,9 +86,10 @@ No user-visible change. Confirm blocking still works before continuing.
 - [x] `Profile` gains `webDomainTokens`
 - [x] `ProfileFormView` reads and writes `activitySelection.webDomainTokens`
 - [x] `AppBlocker` sets and clears `store.shield.webDomains`
-- [ ] **you** Pick a website in the picker, confirm Safari shows the shield
-- [ ] **you** Test the same domain in Chrome, and record the result. It decides whether
-      the phase 7 allowlist is needed.
+- [x] **you** Pick a website in the picker, confirm Safari shows the shield
+- [x] **you** Test the same domain in Chrome. Blocked, and confirms the Shield
+      Configuration extension in phase 7 is needed to close the passcode override on
+      the block screen.
 
 ### Phase 3 — schedule model and UI
 
@@ -129,6 +130,18 @@ Window transitions work at the end of this phase.
 
 ### Phase 7 — hardening
 
+- [ ] **you** Set a Screen Time passcode you do not know yourself (Settings > Screen
+      Time > Use Screen Time Passcode). Every item below, and every restriction Broke
+      sets through `ManagedSettings`, is gated by this passcode. Without it, Settings >
+      Screen Time > Broke lets you revoke authorization or undo any restriction with no
+      barrier at all.
+- [ ] Shield Configuration extension (`ShieldConfigurationDataSource`, covering both
+      `configuration(shielding: Application)` and `configuration(shielding: WebDomain)`)
+      to replace the default system block screen. The default screen carries a built-in
+      "unlock with Screen Time passcode" affordance for both apps and websites — Broke's
+      own screen removes that option, or replaces it with the NFC tag as the only way
+      through. This is the actual fix for the Screen Time passcode override on blocked
+      websites, and it applies with or without the passcode item above.
 - [ ] `store.application.denyAppRemoval = true`
 - [ ] `store.dateAndTime.requireAutomaticDateAndTime = true`
 - [ ] `store.account.lockAccounts = true` and `store.passcode.lockPasscode = true`
@@ -141,15 +154,19 @@ Window transitions work at the end of this phase.
 
 ### Deferred
 
-- [ ] Shield Configuration extension for a custom block message
 - [ ] `.child` authorization in place of `.individual`. It is the only way to stop
       revocation in Settings > Screen Time, and it needs Family Sharing with a second
       Apple ID.
 
 ## Limits
 
+- Every restriction Broke sets through `ManagedSettings` is only as strong as the
+  device's Screen Time passcode. With no passcode set, Settings > Screen Time > Broke
+  lets any restriction be undone with no barrier, and Screen Time override prompts
+  (such as a blocked website's) let content through unchecked.
 - `denyAppRemoval` stops deletion of every app on the device, not only Broke.
-- `.individual` authorization stays revocable in Settings > Screen Time.
+- `.individual` authorization stays revocable in Settings > Screen Time, passcode
+  permitting.
 - Extension callbacks arrive within a few minutes of the boundary, not at the exact
   second. A 30-minute budget can overrun slightly.
 - `DeviceActivityCenter` rejects intervals under 15 minutes with `intervalTooShort`.
