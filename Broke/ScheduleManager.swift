@@ -142,7 +142,18 @@ enum ScheduleManager {
     private static func scheduleWakeUp(at date: Date) {
         let calendar = Calendar.current
         let components: Set<Calendar.Component> = [.year, .month, .day, .hour, .minute]
-        let start = calendar.dateComponents(components, from: Date())
+
+        // DeviceActivityCenter rejects any interval under 15 minutes
+        // (intervalTooShort) — a suspension shorter than that (the 2-minute Debug
+        // duration) would otherwise make `startMonitoring` throw, silently, with
+        // nothing left to fire the auto-reblock. `intervalEnd` stays exactly at the
+        // real suspension deadline; only `intervalStart` gets pushed back far enough
+        // to satisfy the minimum when the suspension itself is shorter than that.
+        let minimumSpan: TimeInterval = 15 * 60
+        let now = Date()
+        let effectiveStart = min(now, date.addingTimeInterval(-minimumSpan))
+
+        let start = calendar.dateComponents(components, from: effectiveStart)
         // Round the end up a minute so truncating seconds can't put it before `start`.
         let end = calendar.dateComponents(components, from: date.addingTimeInterval(60))
         let wakeSchedule = DeviceActivitySchedule(intervalStart: start, intervalEnd: end, repeats: false)
