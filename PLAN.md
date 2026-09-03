@@ -228,13 +228,18 @@ immediately clears the currently-blocking schedules' shields through `sync`. A t
 while nothing is schedule-blocking falls through to the pre-existing manual toggle,
 unchanged.
 
-Two 15-minute extensions per day are available without a tag, from a button on the
-blocked screen showing how many remain (`ScheduleManager.extendSuspension`), behind a
-confirmation naming how many will be left. The tag
-carries physical friction — it has to be to hand — so the extensions exist for when it
-isn't, and the daily cap keeps them an exception rather than a way around it. The
-count is date-stamped and refills at midnight on its own, like the outside-window
-budget flag, rather than depending on a callback to reset it.
+Two 15-minute emergency unblocks per day are available without a tag, from a button on
+the blocked screen showing how many remain (`ScheduleManager.useEmergencyUnblock`),
+behind a confirmation naming how many will be left. The tag carries physical friction —
+it has to be to hand — so these cover when it isn't, and the cap keeps them an exception
+rather than a way around it. The count is date-stamped and refills at midnight on its
+own, like the outside-window budget flag, rather than depending on a callback to reset
+it.
+
+An emergency unblock suspends every schedule, not one: `suspendedUntil` is a single
+value, so the button cannot be conditioned per schedule. With two schedules blocking for
+different reasons, one unblock lifts both. Per-schedule suspension is the change that
+would fix that.
 
 The manual toggle and each schedule write to separate named `ManagedSettingsStore`s
 (see Design). `appBlocker.toggleBlocking` is only reachable when no schedule is
@@ -356,7 +361,7 @@ made during the 30 minutes doesn't cancel the automatic re-block.
   carrying it, and no way to retry.
 - [ ] **you** Write a new tag. The old fixed-phrase tag no longer works, and until a
 
-  new one is written no tag can suspend a schedule — only the daily extensions can.
+  new one is written no tag can suspend a schedule — only the emergency unblocks can.
 
 ### Deferred
 
