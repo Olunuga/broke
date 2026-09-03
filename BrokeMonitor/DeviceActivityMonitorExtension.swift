@@ -13,9 +13,12 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
         guard activity != SharedStore.resumeCheckActivityName else { return }
 
         if let (profile, schedule) = SharedStore.schedule(forOutsideWindowActivity: activity) {
-            // The outside-window tracker's own threshold counter resets here too —
-            // same moment, same daily cycle.
-            SharedStore.setOutsideWindowBudgetExceeded(false, for: schedule.id)
+            // No explicit flag reset here. This fires on every re-registration, not
+            // only at midnight — `ScheduleManager.sync` stops and restarts monitoring
+            // on every launch and resume, and re-registering an activity whose
+            // interval covers now starts it immediately. Clearing the flag here wiped
+            // an already-spent budget each time the app opened. The flag is
+            // date-stamped and expires on its own at midnight instead.
             apply(schedule, profile: profile)
         } else {
             applyState(for: activity)
