@@ -256,12 +256,16 @@ made during the 30 minutes doesn't cancel the automatic re-block.
 
   clearing the suspension early all behave correctly — the block clears on suspend and
   reapplies immediately once the suspension ends, label changes throughout.
-- [x] **you** Confirmed the unassisted 30-minute wake-up test's unblocked result was
+- [x] **you** Confirmed the unassisted wake-up on-device: with a 16-minute suspension
 
-  correct: the schedule's window had already closed by the time the suspension
-  expired, so there was nothing left to re-block. The minute-precision fix and the
-  foreground resync (see Design) stand regardless, as defensive hardening rather than
-  a confirmed bug fix.
+  and Broke backgrounded, the shield reapplied itself mid-use at expiry, with no app
+  launch or foreground resync involved.
+- [ ] **you** Untested: suspensions shorter than `DeviceActivityCenter`'s 15-minute
+
+  minimum. `scheduleWakeUp` clamps `intervalStart` backwards to satisfy that minimum
+  when the suspension is shorter, which places the start in the past — whether iOS
+  accepts a past start for a non-repeating schedule is unconfirmed. Any test at or
+  above 15 minutes takes the natural path and leaves this clamp unexercised.
 - [x] The manual toggle can't touch a schedule's shield through the UI: `scanTag`
 
   checks `SharedStore.activeBlockingSchedules()` before deciding what a tap does,
