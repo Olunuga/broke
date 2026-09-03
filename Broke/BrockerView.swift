@@ -72,13 +72,6 @@ struct BrokerView: View {
                         if !isBlocked {
                             Divider()
 
-                            if isSuspended {
-                                Text("Schedules suspended until \(suspendedUntilLabel)")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                                    .padding(.top, 8)
-                            }
-
                             ProfilesPicker(profileManager: profileManager)
                                 .frame(height: geometry.size.height / 2)
                                 .transition(.move(edge: .bottom))
@@ -168,6 +161,17 @@ struct BrokerView: View {
                     }
                 }
                 .transition(.scale)
+            }
+
+            // Shown whether or not anything is currently blocking. A suspension
+            // outlives a manual block, so hiding this while manually blocked meant
+            // lifting that block revealed nothing about schedules still being
+            // suspended.
+            if isSuspended {
+                Text("Schedules suspended until \(suspendedUntilLabel)")
+                    .font(.caption2)
+                    .opacity(0.7)
+                    .transition(.scale)
             }
 
             Text(blockButtonLabel)
