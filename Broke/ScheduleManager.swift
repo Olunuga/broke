@@ -35,7 +35,7 @@ enum ScheduleManager {
 
         for schedule in allSchedules {
             let store = ManagedSettingsStore(named: schedule.storeName)
-            let shouldBlock = schedule.isEnabled && schedule.isValid && !SharedStore.isSuspended && schedule.wantsBlock()
+            let shouldBlock = schedule.isEnabled && schedule.isValid && !SharedStore.isSuspended && schedule.effectiveWantsBlock()
 
             if shouldBlock, let profile = profileBySchedule[schedule.id] {
                 ShieldWriter.apply(profile, to: store)
@@ -75,35 +75,61 @@ enum ScheduleManager {
         )
 
         var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
-        // `.block`'s budget caps usage outside the blocked window, which this
-        // activity's interval doesn't cover — not yet designed, see PLAN.md.
         if schedule.mode == .allow, let budgetMinutes = schedule.budgetMinutes, budgetMinutes > 0 {
-            let threshold = DateComponents(minute: budgetMinutes)
-            // `includesPastActivity` needs iOS 17.4+; without it, re-registering
-            // mid-window (any schedule edit does, via stopMonitoring) resets the
-            // budget's accumulated usage on older OS versions.
-            if #available(iOS 17.4, *) {
-                events[schedule.budgetEventName] = DeviceActivityEvent(
-                    applications: profile.appTokens,
-                    categories: profile.categoryTokens,
-                    webDomains: profile.webDomainTokens,
-                    threshold: threshold,
-                    includesPastActivity: true
-                )
-            } else {
-                events[schedule.budgetEventName] = DeviceActivityEvent(
-                    applications: profile.appTokens,
-                    categories: profile.categoryTokens,
-                    webDomains: profile.webDomainTokens,
-                    threshold: threshold
-                )
-            }
+            events[schedule.budgetEventName] = budgetEvent(minutes: budgetMinutes, profile: profile)
         }
 
         do {
             try center.startMonitoring(schedule.activityName, during: activitySchedule, events: events)
         } catch {
             NSLog("Broke: failed to start monitoring schedule '\(schedule.name)': \(error)")
+        }
+
+        if schedule.mode == .block, let budgetMinutes = schedule.budgetMinutes, budgetMinutes > 0 {
+            startOutsideWindowMonitoring(schedule, profile: profile, budgetMinutes: budgetMinutes)
+        }
+    }
+
+    /// `.block`'s outside-window budget tracks the whole day, every day this schedule
+    /// runs on, rather than reusing the window's own activity — see `Schedule
+    /// .outsideWindowActivityName`. `DeviceActivitySchedule` has no weekday parameter,
+    /// so this registers daily regardless of `weekdays`; the extension checks
+    /// `isActiveToday()` before treating a threshold hit as real.
+    private static func startOutsideWindowMonitoring(_ schedule: Schedule, profile: Profile, budgetMinutes: Int) {
+        let allDay = DeviceActivitySchedule(
+            intervalStart: DateComponents(hour: 0, minute: 0),
+            intervalEnd: DateComponents(hour: 23, minute: 59),
+            repeats: true
+        )
+        let events = [schedule.outsideWindowEventName: budgetEvent(minutes: budgetMinutes, profile: profile)]
+
+        do {
+            try center.startMonitoring(schedule.outsideWindowActivityName, during: allDay, events: events)
+        } catch {
+            NSLog("Broke: failed to start outside-window monitoring for schedule '\(schedule.name)': \(error)")
+        }
+    }
+
+    /// `includesPastActivity` needs iOS 17.4+; without it, re-registering mid-window
+    /// (any schedule edit does, via `stopMonitoring`) resets the budget's accumulated
+    /// usage on older OS versions.
+    private static func budgetEvent(minutes: Int, profile: Profile) -> DeviceActivityEvent {
+        let threshold = DateComponents(minute: minutes)
+        if #available(iOS 17.4, *) {
+            return DeviceActivityEvent(
+                applications: profile.appTokens,
+                categories: profile.categoryTokens,
+                webDomains: profile.webDomainTokens,
+                threshold: threshold,
+                includesPastActivity: true
+            )
+        } else {
+            return DeviceActivityEvent(
+                applications: profile.appTokens,
+                categories: profile.categoryTokens,
+                webDomains: profile.webDomainTokens,
+                threshold: threshold
+            )
         }
     }
 

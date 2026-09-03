@@ -11,7 +11,15 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
     override func intervalDidStart(for activity: DeviceActivityName) {
         super.intervalDidStart(for: activity)
         guard activity != SharedStore.resumeCheckActivityName else { return }
-        applyState(for: activity)
+
+        if let (profile, schedule) = SharedStore.schedule(forOutsideWindowActivity: activity) {
+            // The outside-window tracker's own threshold counter resets here too —
+            // same moment, same daily cycle.
+            SharedStore.setOutsideWindowBudgetExceeded(false, for: schedule.id)
+            apply(schedule, profile: profile)
+        } else {
+            applyState(for: activity)
+        }
         HardeningManager.refresh()
     }
 
@@ -22,6 +30,8 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
             // every schedule is re-evaluated here rather than just the one that was
             // suspended.
             reapplyAllKnownSchedules()
+        } else if let (profile, schedule) = SharedStore.schedule(forOutsideWindowActivity: activity) {
+            apply(schedule, profile: profile)
         } else {
             applyState(for: activity)
         }
@@ -30,6 +40,20 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
 
     override func eventDidReachThreshold(_ event: DeviceActivityEvent.Name, activity: DeviceActivityName) {
         super.eventDidReachThreshold(event, activity: activity)
+
+        if let (profile, schedule) = SharedStore.schedule(forOutsideWindowActivity: activity),
+           event == schedule.outsideWindowEventName {
+            guard !SharedStore.isSuspended else { return }
+            SharedStore.setOutsideWindowBudgetExceeded(true, for: schedule.id)
+            // Only enforce if today is actually one of this schedule's days — the
+            // tracker runs daily regardless of `weekdays`, since DeviceActivitySchedule
+            // has no weekday parameter to filter it by.
+            if schedule.isActiveToday() {
+                ShieldWriter.apply(profile, to: ManagedSettingsStore(named: schedule.storeName))
+            }
+            HardeningManager.refresh()
+            return
+        }
 
         guard let scheduleId = UUID(uuidString: activity.rawValue),
               let (profile, schedule) = SharedStore.schedule(withId: scheduleId),
@@ -67,7 +91,7 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
     private func apply(_ schedule: Schedule, profile: Profile) {
         let store = ManagedSettingsStore(named: schedule.storeName)
 
-        guard schedule.isEnabled, !SharedStore.isSuspended, schedule.wantsBlock() else {
+        guard schedule.isEnabled, !SharedStore.isSuspended, schedule.effectiveWantsBlock() else {
             ShieldWriter.clear(store)
             return
         }

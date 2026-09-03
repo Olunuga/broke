@@ -18,8 +18,13 @@ the usable window — a `DeviceActivityEvent` on the schedule's own activity, wi
 `threshold: DateComponents(minute: n)`, works directly since the event only needs to
 track usage during that same interval. For `.block`, it caps usage outside the blocked
 window instead — the block activity's own interval covers the wrong span for that, so
-it needs a second activity (or event) covering the rest of the day. Not yet designed
-in detail; see phase 5.
+it uses a second, all-day activity per schedule; see phase 5 for why that works without
+splitting the budget across two disjoint spans, and how closing the window avoids
+wrongly clearing a budget-triggered block.
+- **Activity count roughly doubles for a `.block` schedule with a budget set**, since it
+
+registers both the window's own activity and the all-day outside-window tracker —
+still well below the `excessiveActivities` limit for a handful of schedules.
 - **An App Group carries state** between app and extension: profiles, active profile
 ID, and the suspension date.
 - **Each schedule owns its own named `ManagedSettingsStore`**, keyed by the
@@ -170,16 +175,35 @@ Window transitions work at the end of this phase.
   `includesPastActivity: true` on iOS 17.4+ so the budget survives a schedule edit
   mid-window (`stopMonitoring`/re-register); falls back to the base initializer below
   that OS version, where a mid-window edit does reset the count.
-- [ ] For `.block`: the blocked window and the tracked span don't match, so this needs
+- [x] For `.block`: `Schedule.outsideWindowActivityName`/`outsideWindowEventName` are a
 
-  its own activity covering the rest of the day rather than reusing the block
-  activity's event. Not yet designed.
-- [x] `eventDidReachThreshold` applies the schedule's shield for the rest of today's
+  second, all-day (`00:00`–`23:59`, repeating) activity per schedule, registered
+  alongside the window's own — `DeviceActivitySchedule` can't express two disjoint
+  spans (before and after the window) as one interval, so splitting the budget across
+  two activities was the alternative, and it can't share one threshold across them.
+  The all-day tracker works without splitting: the profile is already shielded during
+  the window, so no usage accrues there, leaving the count an accurate measure of
+  outside-window use alone. Registers daily regardless of `weekdays`, same
+  no-weekday-parameter constraint as everywhere else — the extension checks
+  `isActiveToday()` before treating a threshold hit as real.
+- [x] Closing the window doesn't wrongly clear a budget-triggered block:
 
-  window once its budget event fires. No separate reset logic needed — the schedule's
-  own next `intervalDidStart` recomputes `wantsBlock()` fresh and clears it, since a
-  new day means the threshold has reset too.
+  `Schedule.effectiveWantsBlock()` adds "was the outside-window budget already
+  exceeded today" on top of `wantsBlock()`, backed by
+  `SharedStore.isOutsideWindowBudgetExceeded(for:)` — a flag `eventDidReachThreshold`
+  sets, and the tracking activity's own midnight `intervalDidStart` clears, matching
+  when its threshold counter itself resets. `ScheduleManager.sync`'s resting-state
+  loop and the extension's `apply()` both switched from `wantsBlock()` to
+  `effectiveWantsBlock()`, so app-side and extension-side agree.
+- [x] `eventDidReachThreshold` applies the schedule's shield once a budget event fires
+
+  — the window's own event clears at its next `intervalDidStart` (a new day resets
+  the threshold too); the outside-window event clears the same way via the flag above.
 - [ ] **you** Test the Wednesday-to-Saturday, 30-minute `.allow` case
+- [ ] **you** Test a `.block` schedule with an outside-window budget: use up the budget
+
+  before the window opens, confirm it blocks through the window and stays blocked
+  after the window closes, then confirm it clears at the next day's window start.
 
 ### Phase 6 — NFC early unblock
 

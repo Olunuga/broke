@@ -64,6 +64,17 @@ enum SharedStore {
         return nil
     }
 
+    /// Same lookup, for a schedule's `outsideWindowActivityName` instead of its main
+    /// one — that name carries an `"-outside"` suffix `UUID(uuidString:)` can't parse
+    /// directly, so the suffix is stripped first.
+    static func schedule(forOutsideWindowActivity activity: DeviceActivityName) -> (profile: Profile, schedule: Schedule)? {
+        let suffix = "-outside"
+        guard activity.rawValue.hasSuffix(suffix) else { return nil }
+        let idString = String(activity.rawValue.dropLast(suffix.count))
+        guard let id = UUID(uuidString: idString) else { return nil }
+        return schedule(withId: id)
+    }
+
     // MARK: - Known schedule ids
 
     /// Schedule ids seen as of the last `ScheduleManager.sync`. Used to detect
@@ -98,10 +109,23 @@ enum SharedStore {
         var schedules: [Schedule] = []
         for profile in loadProfiles() {
             for schedule in profile.schedules where schedule.isEnabled && schedule.isValid {
-                if schedule.wantsBlock() { schedules.append(schedule) }
+                if schedule.effectiveWantsBlock() { schedules.append(schedule) }
             }
         }
         return schedules
+    }
+
+    // MARK: - Outside-window budget (`.block` mode)
+
+    /// Whether a `.block` schedule's outside-window budget has already been spent
+    /// today. Resets at the tracking activity's own midnight `intervalDidStart` — the
+    /// same moment its threshold counter resets.
+    static func isOutsideWindowBudgetExceeded(for scheduleId: UUID) -> Bool {
+        defaults.bool(forKey: "outsideWindowBudgetExceeded-\(scheduleId.uuidString)")
+    }
+
+    static func setOutsideWindowBudgetExceeded(_ exceeded: Bool, for scheduleId: UUID) {
+        defaults.set(exceeded, forKey: "outsideWindowBudgetExceeded-\(scheduleId.uuidString)")
     }
 
     static func isAnyScheduleBlocking() -> Bool {

@@ -95,6 +95,20 @@ struct Schedule: Codable, Identifiable, Equatable {
         DeviceActivityEvent.Name(id.uuidString)
     }
 
+    /// Only meaningful for `.block` — a second, all-day activity that tracks usage
+    /// outside the blocked window. The window's own activity only covers the window
+    /// itself, and `DeviceActivitySchedule` can't express two disjoint spans (before
+    /// and after the window) as one interval. An all-day tracker works without
+    /// splitting the budget: during the window the profile is already shielded, so no
+    /// usage accrues there, leaving the count an accurate measure of outside-window use.
+    var outsideWindowActivityName: DeviceActivityName {
+        DeviceActivityName("\(id.uuidString)-outside")
+    }
+
+    var outsideWindowEventName: DeviceActivityEvent.Name {
+        DeviceActivityEvent.Name("\(id.uuidString)-outside")
+    }
+
     var storeName: ManagedSettingsStore.Name {
         ManagedSettingsStore.Name(id.uuidString)
     }
@@ -126,5 +140,15 @@ struct Schedule: Codable, Identifiable, Equatable {
     func wantsBlock(referenceDate: Date = Date(), calendar: Calendar = .current) -> Bool {
         let usable = isUsable(referenceDate: referenceDate, calendar: calendar)
         return mode == .block ? usable : !usable
+    }
+
+    /// `wantsBlock()`, plus: for `.block` mode, staying blocked for the rest of today
+    /// if the outside-window budget was already spent, even after the window itself
+    /// has ended — otherwise the window closing would unconditionally clear a block
+    /// the budget is still supposed to be enforcing.
+    func effectiveWantsBlock(referenceDate: Date = Date(), calendar: Calendar = .current) -> Bool {
+        if wantsBlock(referenceDate: referenceDate, calendar: calendar) { return true }
+        guard mode == .block, isActiveToday(referenceDate: referenceDate, calendar: calendar) else { return false }
+        return SharedStore.isOutsideWindowBudgetExceeded(for: id)
     }
 }
