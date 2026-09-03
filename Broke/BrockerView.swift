@@ -96,7 +96,6 @@ struct BrokerView: View {
             }
         }
         .animation(.spring(), value: isBlocked)
-        .onAppear { refreshScheduleBlockingState() }
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .active {
                 // sync() re-verifies real enforcement — a missed extension callback
@@ -114,6 +113,9 @@ struct BrokerView: View {
         .onReceive(refreshTimer) { _ in
             // SharedStore is UserDefaults-backed and doesn't push updates — poll while
             // the screen is open so a schedule starting mid-session shows up on its own.
+            // This is also the display's only source at launch and on resume, not just
+            // its periodic top-up — see the scenePhase comment above for why an
+            // immediate read at either of those moments isn't trustworthy.
             refreshScheduleBlockingState()
         }
     }
