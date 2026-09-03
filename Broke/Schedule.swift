@@ -151,4 +151,27 @@ struct Schedule: Codable, Identifiable, Equatable {
         guard mode == .block, isActiveToday(referenceDate: referenceDate, calendar: calendar) else { return false }
         return SharedStore.isOutsideWindowBudgetExceeded(for: id)
     }
+
+    /// The next moment this schedule's window opens or closes, respecting
+    /// `weekdays` — display only. Pure window math, the same as `wantsBlock()`; it
+    /// doesn't account for the outside-window budget or a suspension, since neither
+    /// is knowable this precisely from the app (see `SharedStore
+    /// .isOutsideWindowBudgetExceeded`'s doc comment on why actual usage isn't).
+    func nextTransition(referenceDate: Date = Date(), calendar: Calendar = .current) -> Date? {
+        var earliest: Date?
+        for dayOffset in 0...7 {
+            guard let day = calendar.date(byAdding: .day, value: dayOffset, to: referenceDate) else { continue }
+            guard weekdays.contains(calendar.component(.weekday, from: day)) else { continue }
+
+            for time in [startTime, endTime] {
+                guard let candidate = calendar.date(
+                    bySettingHour: time.hour ?? 0, minute: time.minute ?? 0, second: 0, of: day
+                ), candidate > referenceDate else { continue }
+                if earliest == nil || candidate < earliest! {
+                    earliest = candidate
+                }
+            }
+        }
+        return earliest
+    }
 }

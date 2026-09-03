@@ -202,7 +202,26 @@ struct BrokerView: View {
         if schedule.mode == .allow, let budgetMinutes = schedule.budgetMinutes {
             label += " · \(budgetMinutes) min/day limit"
         }
+        if let transitionLabel = nextTransitionLabel(for: schedule) {
+            label += " · \(transitionLabel)"
+        }
         return label
+    }
+
+    /// Countdown to the window opening or closing — not to the budget running out,
+    /// which Apple's DeviceActivity framework never exposes to a third-party app.
+    /// `wantsBlock()` alone (not suspension or the outside-window budget) decides
+    /// whether the next transition blocks or unblocks, since this is a display of the
+    /// window's own schedule, not of everything currently affecting enforcement.
+    private func nextTransitionLabel(for schedule: Schedule) -> String? {
+        guard let next = schedule.nextTransition() else { return nil }
+        let totalMinutes = Int(next.timeIntervalSinceNow / 60)
+        guard totalMinutes >= 0 else { return nil }
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+        let durationLabel = hours > 0 ? "\(hours)h \(minutes)m" : "\(minutes)m"
+        let verb = schedule.wantsBlock() ? "unblocks" : "blocks"
+        return "\(verb) in \(durationLabel)"
     }
 
     private func refreshScheduleBlockingState() {
