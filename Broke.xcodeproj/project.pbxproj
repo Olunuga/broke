@@ -7,8 +7,28 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B9A4E3EBDD5168920C21CCF5 /* DeviceActivityMonitorExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 858662BEED185FCBAFC5A52B /* DeviceActivityMonitorExtension.swift */; };
+		A88A3BD7D28E431145947221 /* HardeningManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C72E35BD24624AF58CB2D55 /* HardeningManager.swift */; };
+		8FEAC78AEC8DAA5BA47A0A97 /* BrokeMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 93C5B49DE5BE6A95E2A8785F /* BrokeMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeaderOnCopy, ); }; };
+		74B4E7F9DC6AA21473BAFC94 /* BrokeShieldConfig.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FFB4FDAA9EDBC55CD7285397 /* BrokeShieldConfig.appex */; settings = {ATTRIBUTES = (RemoveHeaderOnCopy, ); }; };
+		6F24FC1EBAFB6A4D6ADE436B /* BrokeShieldAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A0B5DFC48B8DB40A52D4CA5F /* BrokeShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeaderOnCopy, ); }; };
 		F51C38D22C775953003B4EB3 /* CoreNFC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F51C38D02C77594E003B4EB3 /* CoreNFC.framework */; };
 		F51C38D72C775CAF003B4EB3 /* AppBlocker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F51C38D62C775CAF003B4EB3 /* AppBlocker.swift */; };
+		6CBBA8E18197DB2C67DBBDA0 /* TagSecret.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA9AE70DBF939EDCEF6F14A4 /* TagSecret.swift */; };
+		5D5CDEBC1C59886B6BA2F764 /* ShieldConfigurationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B135C6CAEB159A89E45B2CB /* ShieldConfigurationExtension.swift */; };
+		E70F93E53E83D5E9FD5E8BD8 /* ShieldActionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C5464C0A9371F17732F32A2 /* ShieldActionExtension.swift */; };
+		E13628B3C13B89ACF2419860 /* HardeningManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C72E35BD24624AF58CB2D55 /* HardeningManager.swift */; };
+		ED5D0EBC764E5CF760E39BC0 /* Profile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9976FA2DFF294F1EBE649B1F /* Profile.swift */; };
+		295ECB6EC29FA2D4B65A286E /* ShieldWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBE991B90E83B062B0BF63BC /* ShieldWriter.swift */; };
+		304A17070A350894626CE9E7 /* ScheduleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45D98B3F1210525A22609960 /* ScheduleManager.swift */; };
+		EA01F89446722DEB0EB20ED6 /* Schedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1602DAC877F6AA88AEA3E38D /* Schedule.swift */; };
+		F351B60440616A6E2A082D41 /* SharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19A5FF48E9D08A53B13CC77B /* SharedStore.swift */; };
+		BDA7027BAF2E684A6DE07B3F /* ShieldWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBE991B90E83B062B0BF63BC /* ShieldWriter.swift */; };
+		B3BA27672DD2F7C6DF6888A0 /* Profile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9976FA2DFF294F1EBE649B1F /* Profile.swift */; };
+		55E9BBA9FCC6B412D59D03AF /* Schedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1602DAC877F6AA88AEA3E38D /* Schedule.swift */; };
+		D5A56126DEE344452BB23946 /* ScheduleListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7C6C00F0016B7321D32E3B9 /* ScheduleListView.swift */; };
+		6D18ED41F852A21CE822891A /* ScheduleFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DA6B23DB128492BE3B6D663 /* ScheduleFormView.swift */; };
+		4E5862F421090A3B250D446B /* SharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19A5FF48E9D08A53B13CC77B /* SharedStore.swift */; };
 		F51C38D92C775CEC003B4EB3 /* NfcReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F51C38D82C775CEC003B4EB3 /* NfcReader.swift */; };
 		F51C38DB2C775D0B003B4EB3 /* BrockerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F51C38DA2C775D0B003B4EB3 /* BrockerView.swift */; };
 		F51C38E12C77DADA003B4EB3 /* ProfileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F51C38E02C77DADA003B4EB3 /* ProfileManager.swift */; };
@@ -20,10 +40,89 @@
 		F5A3B0662C733E3500BD6C7F /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F5A3B0652C733E3500BD6C7F /* Preview Assets.xcassets */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		A3729A017D24C152C24EE384 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				8FEAC78AEC8DAA5BA47A0A97 /* BrokeMonitor.appex in Embed Foundation Extensions */,
+				74B4E7F9DC6AA21473BAFC94 /* BrokeShieldConfig.appex in Embed Foundation Extensions */,
+				6F24FC1EBAFB6A4D6ADE436B /* BrokeShieldAction.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXContainerItemProxy section */
+		8EB9C26D5CC239A2B2160923 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F5A3B0532C733E3400BD6C7F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6B1216F043097BF0C418D0B1;
+			remoteInfo = BrokeMonitor;
+		};
+		9069F8D7CA5A8AB2E8769FBD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F5A3B0532C733E3400BD6C7F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 31067064D12D81A27CDB5AA2;
+			remoteInfo = BrokeShieldConfig;
+		};
+		F4665D6273392409973DA31A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F5A3B0532C733E3400BD6C7F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A26B3D04DCC53495E89BD17F;
+			remoteInfo = BrokeShieldAction;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		15B4E1D6C9FFAF6AC730475B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6B1216F043097BF0C418D0B1 /* BrokeMonitor */;
+			targetProxy = 8EB9C26D5CC239A2B2160923 /* PBXContainerItemProxy */;
+		};
+		199FB4D29E727B21AEFE54B4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 31067064D12D81A27CDB5AA2 /* BrokeShieldConfig */;
+			targetProxy = 9069F8D7CA5A8AB2E8769FBD /* PBXContainerItemProxy */;
+		};
+		562DE291A05B96ED2AF5121B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A26B3D04DCC53495E89BD17F /* BrokeShieldAction */;
+			targetProxy = F4665D6273392409973DA31A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin PBXFileReference section */
+		858662BEED185FCBAFC5A52B /* DeviceActivityMonitorExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceActivityMonitorExtension.swift; sourceTree = "<group>"; };
+		9153E960973D60133DC2BA30 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C9B80FC8DEDB34DBB745B339 /* BrokeMonitor.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BrokeMonitor.entitlements; sourceTree = "<group>"; };
+		93C5B49DE5BE6A95E2A8785F /* BrokeMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BrokeMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F51C38D02C77594E003B4EB3 /* CoreNFC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreNFC.framework; path = System/Library/Frameworks/CoreNFC.framework; sourceTree = SDKROOT; };
 		F51C38D52C775AAF003B4EB3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F51C38D62C775CAF003B4EB3 /* AppBlocker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlocker.swift; sourceTree = "<group>"; };
+		EA9AE70DBF939EDCEF6F14A4 /* TagSecret.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagSecret.swift; sourceTree = "<group>"; };
+		6B135C6CAEB159A89E45B2CB /* ShieldConfigurationExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShieldConfigurationExtension.swift; sourceTree = "<group>"; };
+		0D9303A8C39310F191A6EA13 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F1E1E636D002555635B06A81 /* BrokeShieldConfig.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BrokeShieldConfig.entitlements; sourceTree = "<group>"; };
+		FFB4FDAA9EDBC55CD7285397 /* BrokeShieldConfig.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BrokeShieldConfig.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		0C5464C0A9371F17732F32A2 /* ShieldActionExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShieldActionExtension.swift; sourceTree = "<group>"; };
+		703938959035872A5E92F245 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		71451A6C0CD11B189DEB42D3 /* BrokeShieldAction.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BrokeShieldAction.entitlements; sourceTree = "<group>"; };
+		A0B5DFC48B8DB40A52D4CA5F /* BrokeShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BrokeShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		4C72E35BD24624AF58CB2D55 /* HardeningManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HardeningManager.swift; sourceTree = "<group>"; };
+		9976FA2DFF294F1EBE649B1F /* Profile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Profile.swift; sourceTree = "<group>"; };
+		DBE991B90E83B062B0BF63BC /* ShieldWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShieldWriter.swift; sourceTree = "<group>"; };
+		45D98B3F1210525A22609960 /* ScheduleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleManager.swift; sourceTree = "<group>"; };
+		1602DAC877F6AA88AEA3E38D /* Schedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Schedule.swift; sourceTree = "<group>"; };
+		E7C6C00F0016B7321D32E3B9 /* ScheduleListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleListView.swift; sourceTree = "<group>"; };
+		2DA6B23DB128492BE3B6D663 /* ScheduleFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleFormView.swift; sourceTree = "<group>"; };
+		19A5FF48E9D08A53B13CC77B /* SharedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedStore.swift; sourceTree = "<group>"; };
 		F51C38D82C775CEC003B4EB3 /* NfcReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NfcReader.swift; sourceTree = "<group>"; };
 		F51C38DA2C775D0B003B4EB3 /* BrockerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrockerView.swift; sourceTree = "<group>"; };
 		F51C38E02C77DADA003B4EB3 /* ProfileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileManager.swift; sourceTree = "<group>"; };
@@ -46,6 +145,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A9304B7DA719F5155FF1920D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FA668784BC0850839B8BC933 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C77231672561C31E9EF7BC0D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -61,6 +181,9 @@
 			isa = PBXGroup;
 			children = (
 				F5A3B05D2C733E3400BD6C7F /* Broke */,
+				3CD2A215CD4CEEB86C6EBA33 /* BrokeMonitor */,
+				8C841F37913B93E15149AA22 /* BrokeShieldConfig */,
+				70B530604C16709CD731007D /* BrokeShieldAction */,
 				F5A3B05C2C733E3400BD6C7F /* Products */,
 				F51C38CF2C77594E003B4EB3 /* Frameworks */,
 			);
@@ -70,6 +193,9 @@
 			isa = PBXGroup;
 			children = (
 				F5A3B05B2C733E3400BD6C7F /* Broke.app */,
+				93C5B49DE5BE6A95E2A8785F /* BrokeMonitor.appex */,
+				FFB4FDAA9EDBC55CD7285397 /* BrokeShieldConfig.appex */,
+				A0B5DFC48B8DB40A52D4CA5F /* BrokeShieldAction.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -85,6 +211,15 @@
 				F51C38DA2C775D0B003B4EB3 /* BrockerView.swift */,
 				F51C38D82C775CEC003B4EB3 /* NfcReader.swift */,
 				F51C38D62C775CAF003B4EB3 /* AppBlocker.swift */,
+				EA9AE70DBF939EDCEF6F14A4 /* TagSecret.swift */,
+				4C72E35BD24624AF58CB2D55 /* HardeningManager.swift */,
+				9976FA2DFF294F1EBE649B1F /* Profile.swift */,
+				DBE991B90E83B062B0BF63BC /* ShieldWriter.swift */,
+				45D98B3F1210525A22609960 /* ScheduleManager.swift */,
+				1602DAC877F6AA88AEA3E38D /* Schedule.swift */,
+				E7C6C00F0016B7321D32E3B9 /* ScheduleListView.swift */,
+				2DA6B23DB128492BE3B6D663 /* ScheduleFormView.swift */,
+				19A5FF48E9D08A53B13CC77B /* SharedStore.swift */,
 				F5A3B0622C733E3500BD6C7F /* Assets.xcassets */,
 				F5A3B0642C733E3500BD6C7F /* Preview Content */,
 				F51C38E92C78B47A003B4EB3 /* ProfileFormView.swift */,
@@ -100,6 +235,36 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
+		3CD2A215CD4CEEB86C6EBA33 /* BrokeMonitor */ = {
+			isa = PBXGroup;
+			children = (
+				858662BEED185FCBAFC5A52B /* DeviceActivityMonitorExtension.swift */,
+				9153E960973D60133DC2BA30 /* Info.plist */,
+				C9B80FC8DEDB34DBB745B339 /* BrokeMonitor.entitlements */,
+			);
+			path = BrokeMonitor;
+			sourceTree = "<group>";
+		};
+		8C841F37913B93E15149AA22 /* BrokeShieldConfig */ = {
+			isa = PBXGroup;
+			children = (
+				6B135C6CAEB159A89E45B2CB /* ShieldConfigurationExtension.swift */,
+				0D9303A8C39310F191A6EA13 /* Info.plist */,
+				F1E1E636D002555635B06A81 /* BrokeShieldConfig.entitlements */,
+			);
+			path = BrokeShieldConfig;
+			sourceTree = "<group>";
+		};
+		70B530604C16709CD731007D /* BrokeShieldAction */ = {
+			isa = PBXGroup;
+			children = (
+				0C5464C0A9371F17732F32A2 /* ShieldActionExtension.swift */,
+				703938959035872A5E92F245 /* Info.plist */,
+				71451A6C0CD11B189DEB42D3 /* BrokeShieldAction.entitlements */,
+			);
+			path = BrokeShieldAction;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -110,10 +275,14 @@
 				F5A3B0572C733E3400BD6C7F /* Sources */,
 				F5A3B0582C733E3400BD6C7F /* Frameworks */,
 				F5A3B0592C733E3400BD6C7F /* Resources */,
+				A3729A017D24C152C24EE384 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				15B4E1D6C9FFAF6AC730475B /* PBXTargetDependency */,
+				199FB4D29E727B21AEFE54B4 /* PBXTargetDependency */,
+				562DE291A05B96ED2AF5121B /* PBXTargetDependency */,
 			);
 			name = Broke;
 			packageProductDependencies = (
@@ -122,6 +291,57 @@
 			productName = Broke;
 			productReference = F5A3B05B2C733E3400BD6C7F /* Broke.app */;
 			productType = "com.apple.product-type.application";
+		};
+		6B1216F043097BF0C418D0B1 /* BrokeMonitor */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 08CD839C2E460D8914CB82DF /* Build configuration list for PBXNativeTarget "BrokeMonitor" */;
+			buildPhases = (
+				4242F85C9DEA1524A73C3E11 /* Sources */,
+				A9304B7DA719F5155FF1920D /* Frameworks */,
+				A85A471596A14A4936A7E61C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BrokeMonitor;
+			productName = BrokeMonitor;
+			productReference = 93C5B49DE5BE6A95E2A8785F /* BrokeMonitor.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		31067064D12D81A27CDB5AA2 /* BrokeShieldConfig */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0651F113186731E862039714 /* Build configuration list for PBXNativeTarget "BrokeShieldConfig" */;
+			buildPhases = (
+				B4308F661DADB48CC4022A74 /* Sources */,
+				FA668784BC0850839B8BC933 /* Frameworks */,
+				2BF549E7FA2AD55E7D87DE23 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BrokeShieldConfig;
+			productName = BrokeShieldConfig;
+			productReference = FFB4FDAA9EDBC55CD7285397 /* BrokeShieldConfig.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A26B3D04DCC53495E89BD17F /* BrokeShieldAction */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF2C60622593F73DA639C833 /* Build configuration list for PBXNativeTarget "BrokeShieldAction" */;
+			buildPhases = (
+				00E4ADF6B8F49A9270829EDD /* Sources */,
+				C77231672561C31E9EF7BC0D /* Frameworks */,
+				3A83BB777C9BC0659CB65657 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BrokeShieldAction;
+			productName = BrokeShieldAction;
+			productReference = A0B5DFC48B8DB40A52D4CA5F /* BrokeShieldAction.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -134,6 +354,15 @@
 				LastUpgradeCheck = 1540;
 				TargetAttributes = {
 					F5A3B05A2C733E3400BD6C7F = {
+						CreatedOnToolsVersion = 14.3.1;
+					};
+					6B1216F043097BF0C418D0B1 = {
+						CreatedOnToolsVersion = 14.3.1;
+					};
+					31067064D12D81A27CDB5AA2 = {
+						CreatedOnToolsVersion = 14.3.1;
+					};
+					A26B3D04DCC53495E89BD17F = {
 						CreatedOnToolsVersion = 14.3.1;
 					};
 				};
@@ -155,6 +384,9 @@
 			projectRoot = "";
 			targets = (
 				F5A3B05A2C733E3400BD6C7F /* Broke */,
+				6B1216F043097BF0C418D0B1 /* BrokeMonitor */,
+				31067064D12D81A27CDB5AA2 /* BrokeShieldConfig */,
+				A26B3D04DCC53495E89BD17F /* BrokeShieldAction */,
 			);
 		};
 /* End PBXProject section */
@@ -166,6 +398,27 @@
 			files = (
 				F5A3B0662C733E3500BD6C7F /* Preview Assets.xcassets in Resources */,
 				F5A3B0632C733E3500BD6C7F /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A85A471596A14A4936A7E61C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2BF549E7FA2AD55E7D87DE23 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3A83BB777C9BC0659CB65657 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -183,12 +436,224 @@
 				F5A3B05F2C733E3400BD6C7F /* BrokeApp.swift in Sources */,
 				F51C38E82C78ADB5003B4EB3 /* ProfilePicker.swift in Sources */,
 				F51C38D72C775CAF003B4EB3 /* AppBlocker.swift in Sources */,
+				6CBBA8E18197DB2C67DBBDA0 /* TagSecret.swift in Sources */,
+				E13628B3C13B89ACF2419860 /* HardeningManager.swift in Sources */,
+				ED5D0EBC764E5CF760E39BC0 /* Profile.swift in Sources */,
+				295ECB6EC29FA2D4B65A286E /* ShieldWriter.swift in Sources */,
+				304A17070A350894626CE9E7 /* ScheduleManager.swift in Sources */,
+				55E9BBA9FCC6B412D59D03AF /* Schedule.swift in Sources */,
+				D5A56126DEE344452BB23946 /* ScheduleListView.swift in Sources */,
+				6D18ED41F852A21CE822891A /* ScheduleFormView.swift in Sources */,
+				4E5862F421090A3B250D446B /* SharedStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4242F85C9DEA1524A73C3E11 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B9A4E3EBDD5168920C21CCF5 /* DeviceActivityMonitorExtension.swift in Sources */,
+				A88A3BD7D28E431145947221 /* HardeningManager.swift in Sources */,
+				EA01F89446722DEB0EB20ED6 /* Schedule.swift in Sources */,
+				F351B60440616A6E2A082D41 /* SharedStore.swift in Sources */,
+				BDA7027BAF2E684A6DE07B3F /* ShieldWriter.swift in Sources */,
+				B3BA27672DD2F7C6DF6888A0 /* Profile.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B4308F661DADB48CC4022A74 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5D5CDEBC1C59886B6BA2F764 /* ShieldConfigurationExtension.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		00E4ADF6B8F49A9270829EDD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E70F93E53E83D5E9FD5E8BD8 /* ShieldActionExtension.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		0D21C2F2683BFE70F6598367 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BrokeShieldConfig/BrokeShieldConfig.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CH4P23R94R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BrokeShieldConfig/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BrokeShieldConfig;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Brokeest.ios.BrokeShieldConfig;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		E23C6A1028D13F298D143CEA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BrokeShieldConfig/BrokeShieldConfig.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CH4P23R94R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BrokeShieldConfig/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BrokeShieldConfig;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Brokeest.ios.BrokeShieldConfig;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		02A1261CF6F6BCC4B43BD737 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BrokeShieldAction/BrokeShieldAction.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CH4P23R94R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BrokeShieldAction/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BrokeShieldAction;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Brokeest.ios.BrokeShieldAction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		AB807D72D9A2876CED91F7B1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BrokeShieldAction/BrokeShieldAction.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CH4P23R94R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BrokeShieldAction/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BrokeShieldAction;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Brokeest.ios.BrokeShieldAction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		2A617E192074802526B09F45 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BrokeMonitor/BrokeMonitor.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CH4P23R94R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BrokeMonitor/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BrokeMonitor;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Brokeest.ios.BrokeMonitor;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		809F09F2FFCE1EEEC2F1FE39 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = BrokeMonitor/BrokeMonitor.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CH4P23R94R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BrokeMonitor/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BrokeMonitor;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Brokeest.ios.BrokeMonitor;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 		F5A3B0672C733E3500BD6C7F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -311,18 +776,22 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Broke/Broke.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Broke/Preview Content\"";
-				DEVELOPMENT_TEAM = T9M7HZ29H2;
+				DEVELOPMENT_TEAM = CH4P23R94R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Broke/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Broke;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NFCReaderUsageDescription = "NFC tag to read NDEF messages into the application";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = "armv7 nfc";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -330,8 +799,9 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.oztamir.Broke;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Brokeest.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -348,18 +818,22 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Broke/Broke.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Broke/Preview Content\"";
-				DEVELOPMENT_TEAM = T9M7HZ29H2;
+				DEVELOPMENT_TEAM = CH4P23R94R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Broke/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Broke;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NFCReaderUsageDescription = "NFC tag to read NDEF messages into the application";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = "armv7 nfc";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -367,8 +841,9 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.oztamir.Broke;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Brokeest.ios;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -382,6 +857,33 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		0651F113186731E862039714 /* Build configuration list for PBXNativeTarget "BrokeShieldConfig" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0D21C2F2683BFE70F6598367 /* Debug */,
+				E23C6A1028D13F298D143CEA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF2C60622593F73DA639C833 /* Build configuration list for PBXNativeTarget "BrokeShieldAction" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				02A1261CF6F6BCC4B43BD737 /* Debug */,
+				AB807D72D9A2876CED91F7B1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		08CD839C2E460D8914CB82DF /* Build configuration list for PBXNativeTarget "BrokeMonitor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2A617E192074802526B09F45 /* Debug */,
+				809F09F2FFCE1EEEC2F1FE39 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		F5A3B0562C733E3400BD6C7F /* Build configuration list for PBXProject "Broke" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

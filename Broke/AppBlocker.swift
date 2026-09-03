@@ -9,7 +9,7 @@ import ManagedSettings
 import FamilyControls
 
 class AppBlocker: ObservableObject {
-    let store = ManagedSettingsStore()
+    let store = SharedStore.managedSettingsStore
     @Published var isBlocking = false
     @Published var isAuthorized = false
     
@@ -47,20 +47,19 @@ class AppBlocker: ObservableObject {
     
     func applyBlockingSettings(for profile: Profile) {
         if isBlocking {
-            NSLog("Blocking \(profile.appTokens.count) apps")
-            store.shield.applications = profile.appTokens.isEmpty ? nil : profile.appTokens
-            store.shield.applicationCategories = profile.categoryTokens.isEmpty ? ShieldSettings.ActivityCategoryPolicy.none : .specific(profile.categoryTokens)
+            NSLog("Blocking \(profile.appTokens.count) apps, \(profile.webDomainTokens.count) websites")
+            ShieldWriter.apply(profile, to: store)
         } else {
-            store.shield.applications = nil
-            store.shield.applicationCategories = ShieldSettings.ActivityCategoryPolicy.none
+            ShieldWriter.clear(store)
         }
+        HardeningManager.refresh()
     }
     
     private func loadBlockingState() {
-        isBlocking = UserDefaults.standard.bool(forKey: "isBlocking")
+        isBlocking = SharedStore.defaults.bool(forKey: "isBlocking")
     }
     
     private func saveBlockingState() {
-        UserDefaults.standard.set(isBlocking, forKey: "isBlocking")
+        SharedStore.defaults.set(isBlocking, forKey: "isBlocking")
     }
 }
