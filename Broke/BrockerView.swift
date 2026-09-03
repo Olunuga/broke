@@ -118,6 +118,13 @@ struct BrokerView: View {
     @ViewBuilder
     private func blockOrUnblockButton(geometry: GeometryProxy) -> some View {
         VStack(spacing: 8) {
+            if isBlocked {
+                Text("Blocked")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .transition(.scale)
+            }
+
             if appBlocker.isBlocking {
                 Text("Blocked manually")
                     .font(.caption2)
@@ -130,7 +137,7 @@ struct BrokerView: View {
                 VStack(spacing: 6) {
                     ForEach(activeSchedules) { schedule in
                         VStack(spacing: 1) {
-                            Text(schedule.name)
+                            Text("\(schedule.name) · \(schedule.mode.label)")
                                 .font(.caption2)
                                 .fontWeight(.semibold)
                             Text(scheduleDetailLabel(for: schedule))

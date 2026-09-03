@@ -118,14 +118,25 @@ enum SharedStore {
     // MARK: - Outside-window budget (`.block` mode)
 
     /// Whether a `.block` schedule's outside-window budget has already been spent
-    /// today. Resets at the tracking activity's own midnight `intervalDidStart` — the
-    /// same moment its threshold counter resets.
+    /// today. Stored as the date it was set rather than a bare flag, and checked
+    /// against "is that date today" — self-expiring, rather than depending on the
+    /// tracking activity's midnight `intervalDidStart` firing reliably to clear it.
+    /// A missed background callback here would otherwise leave a schedule stuck
+    /// showing as blocking indefinitely.
     static func isOutsideWindowBudgetExceeded(for scheduleId: UUID) -> Bool {
-        defaults.bool(forKey: "outsideWindowBudgetExceeded-\(scheduleId.uuidString)")
+        guard let date = defaults.object(forKey: "outsideWindowBudgetExceededDate-\(scheduleId.uuidString)") as? Date else {
+            return false
+        }
+        return Calendar.current.isDateInToday(date)
     }
 
     static func setOutsideWindowBudgetExceeded(_ exceeded: Bool, for scheduleId: UUID) {
-        defaults.set(exceeded, forKey: "outsideWindowBudgetExceeded-\(scheduleId.uuidString)")
+        let key = "outsideWindowBudgetExceededDate-\(scheduleId.uuidString)"
+        if exceeded {
+            defaults.set(Date(), forKey: key)
+        } else {
+            defaults.removeObject(forKey: key)
+        }
     }
 
     static func isAnyScheduleBlocking() -> Bool {
