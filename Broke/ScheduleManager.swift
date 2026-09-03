@@ -67,6 +67,16 @@ enum ScheduleManager {
         sync(profiles: profiles)
     }
 
+    /// Spends one of the day's extensions to suspend again, without a tag scan.
+    /// Does nothing once the day's allowance is gone.
+    @discardableResult
+    static func extendSuspension(profiles: [Profile]) -> Bool {
+        guard SharedStore.remainingSuspensionExtensions > 0 else { return false }
+        SharedStore.recordSuspensionExtension()
+        suspendActiveSchedules(for: SharedStore.suspensionExtensionDuration, profiles: profiles)
+        return true
+    }
+
     private static func startMonitoring(_ schedule: Schedule, profile: Profile) {
         let activitySchedule = DeviceActivitySchedule(
             intervalStart: schedule.startTime,

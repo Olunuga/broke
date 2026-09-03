@@ -216,16 +216,24 @@ label says which action a tap will take.
 
 `SharedStore` is `UserDefaults`-backed and never pushes updates to an already-running
 view, so schedule state is refreshed on appear, on returning to the foreground, and on
-a 5-second timer while the screen is open — otherwise a schedule starting mid-session
+a 1-second timer while the screen is open — otherwise a schedule starting mid-session
 would never show up without backgrounding the app first. A tag scan re-checks
-`SharedStore.activeBlockingScheduleNames()` fresh rather than trusting that polled
+`SharedStore.activeBlockingSchedules()` fresh rather than trusting that polled
 state, since taking the wrong branch there means touching the wrong shield.
 
 A tag scan while a schedule is the active blocker does not touch the manual toggle —
-it suspends every schedule for 30 minutes (`ScheduleManager.suspendActiveSchedules`),
-which writes `SharedStore.suspendedUntil` and immediately clears the currently-blocking
-schedules' shields via `sync`. A tag scan while nothing is schedule-blocking falls
-through to the pre-existing manual toggle, unchanged.
+it suspends every schedule for `SharedStore.suspensionDuration` (30 minutes) via
+`ScheduleManager.suspendActiveSchedules`, which writes `SharedStore.suspendedUntil` and
+immediately clears the currently-blocking schedules' shields through `sync`. A tag scan
+while nothing is schedule-blocking falls through to the pre-existing manual toggle,
+unchanged.
+
+Two 15-minute extensions per day are available without a tag, from a button on the
+blocked screen showing how many remain (`ScheduleManager.extendSuspension`). The tag
+carries physical friction — it has to be to hand — so the extensions exist for when it
+isn't, and the daily cap keeps them an exception rather than a way around it. The
+count is date-stamped and refills at midnight on its own, like the outside-window
+budget flag, rather than depending on a callback to reset it.
 
 The manual toggle and each schedule write to separate named `ManagedSettingsStore`s
 (see Design). `appBlocker.toggleBlocking` is only reachable when no schedule is
@@ -248,7 +256,7 @@ made during the 30 minutes doesn't cancel the automatic re-block.
 - [x] A one-shot wake-up activity re-applies the shield automatically when the
 
   suspension ends
-- [x] Schedule state refreshes on a 5-second timer while the screen is open, not only
+- [x] Schedule state refreshes on a 1-second timer while the screen is open, not only
 
   on appear/foreground, and a tag scan re-checks fresh state rather than the polled
   `@State` before deciding which shield to touch
@@ -326,21 +334,28 @@ made during the 30 minutes doesn't cancel the automatic re-block.
   5 seconds and on appear, dismissing itself immediately if blocking starts while
   presented — explicit, rather than relying on the sheet being torn down implicitly
   when `ProfilesPicker` leaves the view tree.
-- [ ] The "+" create-tag button stays available while blocking is active. It cannot
+- [x] The "+" create-tag button is gated on `!TagSecret.isRegistered || !isBlocked`,
 
-  be hidden on `isBlocked` alone: a schedule starts without a tag scan, so a schedule
-  beginning before any tag exists would leave no way to create the one thing that can
-  suspend it. The open cost is that a blank tag can be written into a valid one while
-  blocked. Gate this on the tag secret below instead — once a per-install secret
-  exists, the button can be restricted to the case where no tag is registered yet.
+  not on `isBlocked` alone. A schedule starts without a tag scan, so gating on
+  `isBlocked` alone means a schedule beginning before any tag exists leaves no way to
+  create the only thing that can suspend it. Until a tag is registered the button
+  stays available even while blocked; once one exists, writing another mid-block would
+  be a way around the physical tag, so it hides until blocking ends.
 - [x] **you** Confirmed on-device: the custom Broke shield shows for a blocked app,
 
   with one button only and no passcode-override path. Same result for a blocked
   website in Safari.
-- [ ] Replace the fixed tag phrase (`Broke/BrockerView.swift:17`) with a random
+- [x] `TagSecret` replaces the fixed tag phrase with a 32-byte random per-install
 
-  per-install secret. Store its hash in the Keychain and write the secret to the tag.
-- [ ] **you** Re-write the existing tag, because the old phrase stops working
+  secret. Only its SHA256 hash is kept, in the Keychain
+  (`kSecAttrAccessibleAfterFirstUnlock`), so reading the stored value back off the
+  device yields nothing writable to a tag. The secret is generated before the write
+  is attempted: a failed write leaves a hash with no matching tag, recoverable by
+  writing again, which is preferable to a valid tag existing that the app doesn't
+  recognise.
+- [ ] **you** Write a new tag. The old fixed-phrase tag no longer works, and until a
+
+  new one is written no tag can suspend a schedule — only the daily extensions can.
 
 ### Deferred
 

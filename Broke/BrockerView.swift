@@ -15,19 +15,14 @@ struct BrokerView: View {
     @EnvironmentObject private var profileManager: ProfileManager
     @StateObject private var nfcReader = NFCReader()
     @Environment(\.scenePhase) private var scenePhase
-    private let tagPhrase = "BROKE-IS-GREAT"
-    #if DEBUG
-    private static let earlyUnblockDuration: TimeInterval = 16 * 60
-    #else
-    private static let earlyUnblockDuration: TimeInterval = 30 * 60
-    #endif
-
     @State private var showWrongTagAlert = false
     @State private var showCreateTagAlert = false
     @State private var showWriteResultAlert = false
     @State private var nfcWriteSuccess = false
     @State private var activeSchedules: [Schedule]
     @State private var suspendedUntil: Date?
+    @State private var remainingExtensions: Int
+    @State private var isTagRegistered: Bool
     private let refreshTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     /// `.onAppear` only fires after SwiftUI has already rendered a first frame with
@@ -36,6 +31,8 @@ struct BrokerView: View {
     init() {
         _activeSchedules = State(initialValue: SharedStore.activeBlockingSchedules())
         _suspendedUntil = State(initialValue: SharedStore.suspendedUntil)
+        _remainingExtensions = State(initialValue: SharedStore.remainingSuspensionExtensions)
+        _isTagRegistered = State(initialValue: TagSecret.isRegistered)
     }
 
     private var isScheduleBlocking: Bool {
@@ -190,14 +187,53 @@ struct BrokerView: View {
                     .frame(height: geometry.size.height / 3)
             }
             .transition(.scale)
+
+            if isScheduleBlocking {
+                extendButton
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .frame(height: isBlocked ? geometry.size.height : geometry.size.height / 2)
         .animation(.spring(), value: isBlocked)
     }
 
+    /// Extends the suspension without a tag scan, for when the tag isn't to hand.
+    /// Limited per day, so it stays an exception rather than a way around the tag.
+    @ViewBuilder
+    private var extendButton: some View {
+        if remainingExtensions > 0 {
+            Button(action: extendSuspension) {
+                Text("Extend \(extensionMinutes) min · \(remainingExtensions) left today")
+                    .font(.caption2)
+                    .fontWeight(.semibold)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
+                    .background(Color.secondary.opacity(0.2))
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .transition(.scale)
+        } else {
+            Text("No extensions left today")
+                .font(.caption2)
+                .opacity(0.6)
+                .transition(.scale)
+        }
+    }
+
+    private var extensionMinutes: Int {
+        Int(SharedStore.suspensionExtensionDuration / 60)
+    }
+
+    private func extendSuspension() {
+        withAnimation(.spring()) {
+            ScheduleManager.extendSuspension(profiles: profileManager.profiles)
+            refreshScheduleBlockingState()
+        }
+    }
+
     private var earlyUnblockMinutesLabel: String {
-        "\(Int(Self.earlyUnblockDuration / 60)) minutes"
+        "\(Int(SharedStore.suspensionDuration / 60)) minutes"
     }
 
     private var blockButtonLabel: String {
@@ -243,13 +279,14 @@ struct BrokerView: View {
     private func refreshScheduleBlockingState() {
         activeSchedules = SharedStore.activeBlockingSchedules()
         suspendedUntil = SharedStore.suspendedUntil
+        remainingExtensions = SharedStore.remainingSuspensionExtensions
     }
 
     private func scanTag() {
         nfcReader.scan { payload in
-            guard payload == tagPhrase else {
+            guard TagSecret.matches(payload) else {
                 showWrongTagAlert = true
-                NSLog("Wrong Tag!\nPayload: \(payload)")
+                NSLog("Wrong Tag!")
                 return
             }
 
@@ -257,8 +294,8 @@ struct BrokerView: View {
             // be stale by up to the poll interval, and taking the wrong branch here
             // means the wrong shield gets touched.
             if !SharedStore.activeBlockingSchedules().isEmpty {
-                NSLog("Suspending active schedule for \(Int(Self.earlyUnblockDuration / 60)) minutes")
-                ScheduleManager.suspendActiveSchedules(for: Self.earlyUnblockDuration, profiles: profileManager.profiles)
+                NSLog("Suspending active schedule for \(Int(SharedStore.suspensionDuration / 60)) minutes")
+                ScheduleManager.suspendActiveSchedules(for: SharedStore.suspensionDuration, profiles: profileManager.profiles)
             } else {
                 NSLog("Toggling block")
                 appBlocker.toggleBlocking(for: profileManager.currentProfile)
@@ -267,22 +304,21 @@ struct BrokerView: View {
         }
     }
     
-    /// Available while blocking is active, because a schedule starts on its own
-    /// without a tag scan. Hiding this whenever `isBlocked` meant a schedule could
-    /// begin before any tag existed, leaving no way to create the one thing that can
-    /// suspend it — the block had to be waited out.
-    ///
-    /// The cost is that someone holding a blank tag can write a valid one while
-    /// blocked. Closing that without reintroducing the lockout needs the tag secret
-    /// from PLAN.md phase 7: once a per-install secret exists, this button can be
-    /// restricted to the case where no tag has been registered yet.
+    /// Gated on whether a tag exists, not on `isBlocked`. Until one is registered this
+    /// stays available even while blocking, since a schedule starts without a tag scan
+    /// and would otherwise leave no way to create the only thing that can suspend it.
+    /// Once a tag exists, writing another while blocked would be a way around the
+    /// physical tag, so the button goes away until blocking ends.
+    @ViewBuilder
     private var createTagButton: some View {
-        Button(action: {
-            showCreateTagAlert = true
-        }) {
-            Image(systemName: "plus")
+        if !isTagRegistered || !isBlocked {
+            Button(action: {
+                showCreateTagAlert = true
+            }) {
+                Image(systemName: "plus")
+            }
+            .disabled(!NFCNDEFReaderSession.readingAvailable)
         }
-        .disabled(!NFCNDEFReaderSession.readingAvailable)
     }
 
     /// Debug builds only — a suspension is otherwise only clearable by waiting it out
@@ -306,11 +342,23 @@ struct BrokerView: View {
     }
     #endif
     
+    /// Generates the secret before writing, so a failed write leaves a stored hash
+    /// with no matching tag. Writing again recovers from that; the alternative —
+    /// storing only after a successful write — would leave a valid tag in the world
+    /// that the app doesn't recognise, which is worse.
     private func createBrokerTag() {
-        nfcReader.write(tagPhrase) { success in
+        guard let secret = TagSecret.generate() else {
+            nfcWriteSuccess = false
+            showCreateTagAlert = false
+            showWriteResultAlert = true
+            return
+        }
+
+        nfcReader.write(secret) { success in
             nfcWriteSuccess = success
             showCreateTagAlert = false
             showWriteResultAlert = true
+            isTagRegistered = TagSecret.isRegistered
         }
     }
 }

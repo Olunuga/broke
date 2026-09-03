@@ -35,7 +35,15 @@ enum SharedStore {
         static let suspendedUntil = "suspendedUntil"
         static let didMigrateFromStandardDefaults = "didMigrateFromStandardDefaults"
         static let knownScheduleIds = "knownScheduleIds"
+        static let extensionsUsedDate = "suspensionExtensionsUsedDate"
+        static let extensionsUsedCount = "suspensionExtensionsUsedCount"
     }
+
+    // MARK: - Suspension durations
+
+    static let suspensionDuration: TimeInterval = 30 * 60
+    static let suspensionExtensionDuration: TimeInterval = 15 * 60
+    static let maximumSuspensionExtensions = 2
 
     // MARK: - Profiles
 
@@ -94,6 +102,27 @@ enum SharedStore {
     static var suspendedUntil: Date? {
         get { defaults.object(forKey: Key.suspendedUntil) as? Date }
         set { defaults.set(newValue, forKey: Key.suspendedUntil) }
+    }
+
+    /// Extensions taken today. Date-stamped so the allowance refills at midnight
+    /// without depending on a callback to reset it, same as the outside-window
+    /// budget flag.
+    static var suspensionExtensionsUsedToday: Int {
+        guard let date = defaults.object(forKey: Key.extensionsUsedDate) as? Date,
+              Calendar.current.isDateInToday(date) else {
+            return 0
+        }
+        return defaults.integer(forKey: Key.extensionsUsedCount)
+    }
+
+    static var remainingSuspensionExtensions: Int {
+        max(0, maximumSuspensionExtensions - suspensionExtensionsUsedToday)
+    }
+
+    static func recordSuspensionExtension() {
+        let used = suspensionExtensionsUsedToday
+        defaults.set(Date(), forKey: Key.extensionsUsedDate)
+        defaults.set(used + 1, forKey: Key.extensionsUsedCount)
     }
 
     static var isSuspended: Bool {
