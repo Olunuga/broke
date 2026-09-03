@@ -16,7 +16,11 @@ struct BrokerView: View {
     @StateObject private var nfcReader = NFCReader()
     @Environment(\.scenePhase) private var scenePhase
     private let tagPhrase = "BROKE-IS-GREAT"
+    #if DEBUG
+    private static let earlyUnblockDuration: TimeInterval = 2 * 60
+    #else
     private static let earlyUnblockDuration: TimeInterval = 30 * 60
+    #endif
 
     @State private var showWrongTagAlert = false
     @State private var showCreateTagAlert = false
