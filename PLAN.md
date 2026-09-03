@@ -359,9 +359,9 @@ made during the 30 minutes doesn't cancel the automatic re-block.
   only once the NFC write reports success — gating the create-tag button on hash
   presence instead would hide it after a failed write, with a hash stored, no tag
   carrying it, and no way to retry.
-- [ ] **you** Write a new tag. The old fixed-phrase tag no longer works, and until a
+- [x] **you** Wrote a tag carrying a per-install secret. The old fixed-phrase tag no
 
-  new one is written no tag can suspend a schedule — only the emergency unblocks can.
+  longer works.
 
 ### Deferred
 
