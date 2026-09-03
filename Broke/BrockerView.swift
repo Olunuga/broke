@@ -119,10 +119,9 @@ struct BrokerView: View {
     private func blockOrUnblockButton(geometry: GeometryProxy) -> some View {
         VStack(spacing: 8) {
             if isBlocked {
-                Text("Blocked")
+                Text("Active Profile")
                     .font(.headline)
                     .fontWeight(.bold)
-                    .transition(.scale)
             }
 
             if appBlocker.isBlocking {
@@ -130,7 +129,6 @@ struct BrokerView: View {
                     .font(.caption2)
                     .fontWeight(.semibold)
                     .opacity(0.85)
-                    .transition(.scale)
             }
 
             if !activeSchedules.isEmpty {
@@ -146,7 +144,6 @@ struct BrokerView: View {
                         }
                     }
                 }
-                .transition(.scale)
             }
 
             Text(blockButtonLabel)
