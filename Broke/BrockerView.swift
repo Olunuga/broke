@@ -28,7 +28,7 @@ struct BrokerView: View {
     @State private var nfcWriteSuccess = false
     @State private var activeSchedules: [Schedule] = []
     @State private var suspendedUntil: Date?
-    private let refreshTimer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
+    private let refreshTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var isScheduleBlocking: Bool {
         !activeSchedules.isEmpty
@@ -100,26 +100,30 @@ struct BrokerView: View {
             }
         }
         .animation(.spring(), value: isBlocked)
+        .onAppear {
+            // Read immediately for a fast first paint. This can occasionally race a
+            // background extension callback that hasn't been delivered yet (e.g. one
+            // that crossed a schedule boundary while suspended) and show briefly
+            // stale data — the 1-second poll below corrects that quickly enough not
+            // to read as a flicker, which is a better tradeoff than leaving the
+            // screen blank until the first poll tick.
+            refreshScheduleBlockingState()
+        }
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .active {
                 // sync() re-verifies real enforcement — a missed extension callback
                 // (e.g. a wake-up that failed to register) wouldn't show up as wrong
-                // otherwise. It does not, on its own, drive the display: reading
-                // SharedStore for display immediately after resuming caught a
-                // transient state where a background extension callback that crossed
-                // a schedule boundary while the app was suspended hadn't been
-                // delivered yet, showing a schedule then hiding it again — the poll
-                // timer's next tick, a few seconds later, always had the correct
-                // answer. Leaving the display to that same poll avoids the gap.
+                // otherwise.
                 ScheduleManager.sync(profiles: profileManager.profiles)
+                refreshScheduleBlockingState()
             }
         }
         .onReceive(refreshTimer) { _ in
             // SharedStore is UserDefaults-backed and doesn't push updates — poll while
             // the screen is open so a schedule starting mid-session shows up on its own.
-            // This is also the display's only source at launch and on resume, not just
-            // its periodic top-up — see the scenePhase comment above for why an
-            // immediate read at either of those moments isn't trustworthy.
+            // A 1-second interval, not something more relaxed, so the launch/resume
+            // race described above corrects fast enough to read as instant rather
+            // than as a flicker.
             refreshScheduleBlockingState()
         }
     }
