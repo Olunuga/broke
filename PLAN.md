@@ -326,10 +326,13 @@ made during the 30 minutes doesn't cancel the automatic re-block.
   5 seconds and on appear, dismissing itself immediately if blocking starts while
   presented — explicit, rather than relying on the sheet being torn down implicitly
   when `ProfilesPicker` leaves the view tree.
-- [x] The "+" create-tag button is hidden, not just disabled, while anything is
+- [ ] The "+" create-tag button stays available while blocking is active. It cannot
 
-  blocking. Left visible, it would let anyone with a blank NFC tag mint a new valid
-  one on the spot, making the physical-tag requirement meaningless.
+  be hidden on `isBlocked` alone: a schedule starts without a tag scan, so a schedule
+  beginning before any tag exists would leave no way to create the one thing that can
+  suspend it. The open cost is that a blank tag can be written into a valid one while
+  blocked. Gate this on the tag secret below instead — once a per-install secret
+  exists, the button can be restricted to the case where no tag is registered yet.
 - [x] **you** Confirmed on-device: the custom Broke shield shows for a blocked app,
 
   with one button only and no passcode-override path. Same result for a blocked

@@ -267,19 +267,22 @@ struct BrokerView: View {
         }
     }
     
-    /// Hidden, not just disabled, while anything is blocking — otherwise anyone with
-    /// a blank NFC tag could mint a new valid one on the spot, making the physical
-    /// tag requirement meaningless.
-    @ViewBuilder
+    /// Available while blocking is active, because a schedule starts on its own
+    /// without a tag scan. Hiding this whenever `isBlocked` meant a schedule could
+    /// begin before any tag existed, leaving no way to create the one thing that can
+    /// suspend it — the block had to be waited out.
+    ///
+    /// The cost is that someone holding a blank tag can write a valid one while
+    /// blocked. Closing that without reintroducing the lockout needs the tag secret
+    /// from PLAN.md phase 7: once a per-install secret exists, this button can be
+    /// restricted to the case where no tag has been registered yet.
     private var createTagButton: some View {
-        if !isBlocked {
-            Button(action: {
-                showCreateTagAlert = true
-            }) {
-                Image(systemName: "plus")
-            }
-            .disabled(!NFCNDEFReaderSession.readingAvailable)
+        Button(action: {
+            showCreateTagAlert = true
+        }) {
+            Image(systemName: "plus")
         }
+        .disabled(!NFCNDEFReaderSession.readingAvailable)
     }
 
     /// Debug builds only — a suspension is otherwise only clearable by waiting it out
