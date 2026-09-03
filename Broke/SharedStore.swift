@@ -43,7 +43,7 @@ enum SharedStore {
 
     static let suspensionDuration: TimeInterval = 60 * 60
     static let emergencyUnblockDuration: TimeInterval = 15 * 60
-    static let maximumEmergencyUnblocks = 2
+    static let maximumEmergencyUnblocks = 5
 
     // MARK: - Profiles
 
@@ -104,23 +104,24 @@ enum SharedStore {
         set { defaults.set(newValue, forKey: Key.suspendedUntil) }
     }
 
-    /// Extensions taken today. Date-stamped so the allowance refills at midnight
-    /// without depending on a callback to reset it, same as the outside-window
-    /// budget flag.
-    static var emergencyUnblocksUsedToday: Int {
+    /// Emergency unblocks taken this calendar month. One stored date plus a count is
+    /// enough: a stamp from an earlier month reads as zero used, and the next unblock
+    /// restamps it. Derived from the stored date rather than reset by a callback, so
+    /// nothing has to fire at the month boundary for the allowance to refill.
+    static var emergencyUnblocksUsedThisMonth: Int {
         guard let date = defaults.object(forKey: Key.emergencyUnblocksUsedDate) as? Date,
-              Calendar.current.isDateInToday(date) else {
+              Calendar.current.isDate(date, equalTo: Date(), toGranularity: .month) else {
             return 0
         }
         return defaults.integer(forKey: Key.emergencyUnblocksUsedCount)
     }
 
     static var remainingEmergencyUnblocks: Int {
-        max(0, maximumEmergencyUnblocks - emergencyUnblocksUsedToday)
+        max(0, maximumEmergencyUnblocks - emergencyUnblocksUsedThisMonth)
     }
 
     static func recordEmergencyUnblock() {
-        let used = emergencyUnblocksUsedToday
+        let used = emergencyUnblocksUsedThisMonth
         defaults.set(Date(), forKey: Key.emergencyUnblocksUsedDate)
         defaults.set(used + 1, forKey: Key.emergencyUnblocksUsedCount)
     }

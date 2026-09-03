@@ -67,8 +67,8 @@ enum ScheduleManager {
         sync(profiles: profiles)
     }
 
-    /// Spends one of the day's emergency unblocks, suspending without a tag scan.
-    /// Does nothing once the day's allowance is gone.
+    /// Spends one of the month's emergency unblocks, suspending without a tag scan.
+    /// Does nothing once the month's allowance is gone.
     @discardableResult
     static func useEmergencyUnblock(profiles: [Profile]) -> Bool {
         guard SharedStore.remainingEmergencyUnblocks > 0 else { return false }

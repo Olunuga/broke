@@ -97,8 +97,8 @@ struct BrokerView: View {
                 Button("Cancel", role: .cancel) { }
             } message: {
                 Text(remainingEmergencyUnblocks == 1
-                     ? "This is your last emergency unblock today."
-                     : "You'll have \(remainingEmergencyUnblocks - 1) left today.")
+                     ? "This is your last emergency unblock this month."
+                     : "You'll have \(remainingEmergencyUnblocks - 1) left this month.")
             }
             .alert("Tag Creation", isPresented: $showWriteResultAlert) {
                 Button("OK", role: .cancel) { }
@@ -206,7 +206,7 @@ struct BrokerView: View {
         .animation(.spring(), value: isBlocked)
     }
 
-    /// Unblocks without a tag scan, for when the tag isn't to hand. Capped per day, so
+    /// Unblocks without a tag scan, for when the tag isn't to hand. Capped per month, so
     /// it stays an exception rather than a way around the tag.
     @ViewBuilder
     private var emergencyUnblockButton: some View {
@@ -223,7 +223,7 @@ struct BrokerView: View {
             .buttonStyle(.plain)
             .transition(.scale)
         } else {
-            Text("No emergency unblocks left today")
+            Text("No emergency unblocks left this month")
                 .font(.caption2)
                 .opacity(0.6)
                 .transition(.scale)

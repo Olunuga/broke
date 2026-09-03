@@ -228,13 +228,13 @@ immediately clears the currently-blocking schedules' shields through `sync`. A t
 while nothing is schedule-blocking falls through to the pre-existing manual toggle,
 unchanged.
 
-Two 15-minute emergency unblocks per day are available without a tag, from a button on
-the blocked screen showing how many remain (`ScheduleManager.useEmergencyUnblock`),
-behind a confirmation naming how many will be left. The tag carries physical friction —
-it has to be to hand — so these cover when it isn't, and the cap keeps them an exception
-rather than a way around it. The count is date-stamped and refills at midnight on its
-own, like the outside-window budget flag, rather than depending on a callback to reset
-it.
+Five 15-minute emergency unblocks per calendar month are available without a tag, from
+a button on the blocked screen showing how many remain
+(`ScheduleManager.useEmergencyUnblock`), behind a confirmation naming how many will be
+left. The tag carries physical friction — it has to be to hand — so these cover when it
+isn't, and the cap keeps them an exception rather than a way around it. The count is
+derived from a stored date rather than reset by a callback, so nothing has to fire at
+the month boundary for the allowance to refill.
 
 An emergency unblock suspends every schedule, not one: `suspendedUntil` is a single
 value, so the button cannot be conditioned per schedule. With two schedules blocking for
@@ -289,7 +289,7 @@ made during the 30 minutes doesn't cancel the automatic re-block.
 
 ### Phase 7 — hardening
 
-- [ ] **you** Set a Screen Time passcode you do not know yourself (Settings &gt; Screen
+- [x] **you** Set a Screen Time passcode you do not know yourself (Settings &gt; Screen
 
   Time &gt; Use Screen Time Passcode). Every item below, and every restriction Broke
   sets through `ManagedSettings`, is gated by this passcode. Without it, Settings &gt;
