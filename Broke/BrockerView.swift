@@ -16,13 +16,13 @@ struct BrokerView: View {
     @StateObject private var nfcReader = NFCReader()
     @Environment(\.scenePhase) private var scenePhase
     @State private var showWrongTagAlert = false
-    @State private var showExtendConfirmation = false
+    @State private var showEmergencyUnblockConfirmation = false
     @State private var showCreateTagAlert = false
     @State private var showWriteResultAlert = false
     @State private var nfcWriteSuccess = false
     @State private var activeSchedules: [Schedule]
     @State private var suspendedUntil: Date?
-    @State private var remainingExtensions: Int
+    @State private var remainingEmergencyUnblocks: Int
     @State private var isTagRegistered: Bool
     private let refreshTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -32,7 +32,7 @@ struct BrokerView: View {
     init() {
         _activeSchedules = State(initialValue: SharedStore.activeBlockingSchedules())
         _suspendedUntil = State(initialValue: SharedStore.suspendedUntil)
-        _remainingExtensions = State(initialValue: SharedStore.remainingSuspensionExtensions)
+        _remainingEmergencyUnblocks = State(initialValue: SharedStore.remainingEmergencyUnblocks)
         _isTagRegistered = State(initialValue: TagSecret.isRegistered)
     }
 
@@ -92,13 +92,13 @@ struct BrokerView: View {
             } message: {
                 Text("Do you want to create a new Broker tag?")
             }
-            .alert("Extend \(extensionMinutes) Minutes", isPresented: $showExtendConfirmation) {
-                Button("Extend") { extendSuspension() }
+            .alert("Emergency Unblock", isPresented: $showEmergencyUnblockConfirmation) {
+                Button("Unblock \(emergencyUnblockMinutes) min") { useEmergencyUnblock() }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                Text(remainingExtensions == 1
-                     ? "This is your last extension today."
-                     : "You'll have \(remainingExtensions - 1) left today.")
+                Text(remainingEmergencyUnblocks == 1
+                     ? "This is your last emergency unblock today."
+                     : "You'll have \(remainingEmergencyUnblocks - 1) left today.")
             }
             .alert("Tag Creation", isPresented: $showWriteResultAlert) {
                 Button("OK", role: .cancel) { }
@@ -198,7 +198,7 @@ struct BrokerView: View {
             .transition(.scale)
 
             if isScheduleBlocking {
-                extendButton
+                emergencyUnblockButton
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -206,13 +206,13 @@ struct BrokerView: View {
         .animation(.spring(), value: isBlocked)
     }
 
-    /// Extends the suspension without a tag scan, for when the tag isn't to hand.
-    /// Limited per day, so it stays an exception rather than a way around the tag.
+    /// Unblocks without a tag scan, for when the tag isn't to hand. Capped per day, so
+    /// it stays an exception rather than a way around the tag.
     @ViewBuilder
-    private var extendButton: some View {
-        if remainingExtensions > 0 {
-            Button(action: { showExtendConfirmation = true }) {
-                Text("Extend \(extensionMinutes) min · \(remainingExtensions) left today")
+    private var emergencyUnblockButton: some View {
+        if remainingEmergencyUnblocks > 0 {
+            Button(action: { showEmergencyUnblockConfirmation = true }) {
+                Text("Emergency Unblock · \(remainingEmergencyUnblocks) left")
                     .font(.caption2)
                     .fontWeight(.semibold)
                     .padding(.horizontal, 14)
@@ -223,20 +223,20 @@ struct BrokerView: View {
             .buttonStyle(.plain)
             .transition(.scale)
         } else {
-            Text("No extensions left today")
+            Text("No emergency unblocks left today")
                 .font(.caption2)
                 .opacity(0.6)
                 .transition(.scale)
         }
     }
 
-    private var extensionMinutes: Int {
-        Int(SharedStore.suspensionExtensionDuration / 60)
+    private var emergencyUnblockMinutes: Int {
+        Int(SharedStore.emergencyUnblockDuration / 60)
     }
 
-    private func extendSuspension() {
+    private func useEmergencyUnblock() {
         withAnimation(.spring()) {
-            ScheduleManager.extendSuspension(profiles: profileManager.profiles)
+            ScheduleManager.useEmergencyUnblock(profiles: profileManager.profiles)
             refreshScheduleBlockingState()
         }
     }
@@ -288,7 +288,7 @@ struct BrokerView: View {
     private func refreshScheduleBlockingState() {
         activeSchedules = SharedStore.activeBlockingSchedules()
         suspendedUntil = SharedStore.suspendedUntil
-        remainingExtensions = SharedStore.remainingSuspensionExtensions
+        remainingEmergencyUnblocks = SharedStore.remainingEmergencyUnblocks
     }
 
     private func scanTag() {

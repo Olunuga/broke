@@ -67,13 +67,13 @@ enum ScheduleManager {
         sync(profiles: profiles)
     }
 
-    /// Spends one of the day's extensions to suspend again, without a tag scan.
+    /// Spends one of the day's emergency unblocks, suspending without a tag scan.
     /// Does nothing once the day's allowance is gone.
     @discardableResult
-    static func extendSuspension(profiles: [Profile]) -> Bool {
-        guard SharedStore.remainingSuspensionExtensions > 0 else { return false }
-        SharedStore.recordSuspensionExtension()
-        suspendActiveSchedules(for: SharedStore.suspensionExtensionDuration, profiles: profiles)
+    static func useEmergencyUnblock(profiles: [Profile]) -> Bool {
+        guard SharedStore.remainingEmergencyUnblocks > 0 else { return false }
+        SharedStore.recordEmergencyUnblock()
+        suspendActiveSchedules(for: SharedStore.emergencyUnblockDuration, profiles: profiles)
         return true
     }
 
@@ -154,11 +154,10 @@ enum ScheduleManager {
         let components: Set<Calendar.Component> = [.year, .month, .day, .hour, .minute]
 
         // DeviceActivityCenter rejects any interval under 15 minutes
-        // (intervalTooShort) — a suspension shorter than that (the 2-minute Debug
-        // duration) would otherwise make `startMonitoring` throw, silently, with
-        // nothing left to fire the auto-reblock. `intervalEnd` stays exactly at the
-        // real suspension deadline; only `intervalStart` gets pushed back far enough
-        // to satisfy the minimum when the suspension itself is shorter than that.
+        // (intervalTooShort), which a short suspension would otherwise hit — making
+        // `startMonitoring` throw, silently, with nothing left to fire the
+        // auto-reblock. `intervalEnd` stays exactly at the real suspension deadline;
+        // only `intervalStart` moves back far enough to satisfy the minimum.
         let minimumSpan: TimeInterval = 15 * 60
         let now = Date()
         let effectiveStart = min(now, date.addingTimeInterval(-minimumSpan))

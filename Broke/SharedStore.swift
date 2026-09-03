@@ -35,15 +35,15 @@ enum SharedStore {
         static let suspendedUntil = "suspendedUntil"
         static let didMigrateFromStandardDefaults = "didMigrateFromStandardDefaults"
         static let knownScheduleIds = "knownScheduleIds"
-        static let extensionsUsedDate = "suspensionExtensionsUsedDate"
-        static let extensionsUsedCount = "suspensionExtensionsUsedCount"
+        static let emergencyUnblocksUsedDate = "emergencyUnblocksUsedDateKey"
+        static let emergencyUnblocksUsedCount = "emergencyUnblocksUsedCountKey"
     }
 
     // MARK: - Suspension durations
 
-    static let suspensionDuration: TimeInterval = 30 * 60
-    static let suspensionExtensionDuration: TimeInterval = 15 * 60
-    static let maximumSuspensionExtensions = 2
+    static let suspensionDuration: TimeInterval = 60 * 60
+    static let emergencyUnblockDuration: TimeInterval = 15 * 60
+    static let maximumEmergencyUnblocks = 2
 
     // MARK: - Profiles
 
@@ -107,22 +107,22 @@ enum SharedStore {
     /// Extensions taken today. Date-stamped so the allowance refills at midnight
     /// without depending on a callback to reset it, same as the outside-window
     /// budget flag.
-    static var suspensionExtensionsUsedToday: Int {
-        guard let date = defaults.object(forKey: Key.extensionsUsedDate) as? Date,
+    static var emergencyUnblocksUsedToday: Int {
+        guard let date = defaults.object(forKey: Key.emergencyUnblocksUsedDate) as? Date,
               Calendar.current.isDateInToday(date) else {
             return 0
         }
-        return defaults.integer(forKey: Key.extensionsUsedCount)
+        return defaults.integer(forKey: Key.emergencyUnblocksUsedCount)
     }
 
-    static var remainingSuspensionExtensions: Int {
-        max(0, maximumSuspensionExtensions - suspensionExtensionsUsedToday)
+    static var remainingEmergencyUnblocks: Int {
+        max(0, maximumEmergencyUnblocks - emergencyUnblocksUsedToday)
     }
 
-    static func recordSuspensionExtension() {
-        let used = suspensionExtensionsUsedToday
-        defaults.set(Date(), forKey: Key.extensionsUsedDate)
-        defaults.set(used + 1, forKey: Key.extensionsUsedCount)
+    static func recordEmergencyUnblock() {
+        let used = emergencyUnblocksUsedToday
+        defaults.set(Date(), forKey: Key.emergencyUnblocksUsedDate)
+        defaults.set(used + 1, forKey: Key.emergencyUnblocksUsedCount)
     }
 
     static var isSuspended: Bool {
