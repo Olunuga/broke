@@ -17,7 +17,7 @@ struct BrokerView: View {
     @Environment(\.scenePhase) private var scenePhase
     private let tagPhrase = "BROKE-IS-GREAT"
     #if DEBUG
-    private static let earlyUnblockDuration: TimeInterval = 2 * 60
+    private static let earlyUnblockDuration: TimeInterval = 16 * 60
     #else
     private static let earlyUnblockDuration: TimeInterval = 30 * 60
     #endif
@@ -26,9 +26,17 @@ struct BrokerView: View {
     @State private var showCreateTagAlert = false
     @State private var showWriteResultAlert = false
     @State private var nfcWriteSuccess = false
-    @State private var activeSchedules: [Schedule] = []
+    @State private var activeSchedules: [Schedule]
     @State private var suspendedUntil: Date?
     private let refreshTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
+    /// `.onAppear` only fires after SwiftUI has already rendered a first frame with
+    /// whatever the `@State` defaults are — reading here instead means that first
+    /// frame is already correct, with no gap at all.
+    init() {
+        _activeSchedules = State(initialValue: SharedStore.activeBlockingSchedules())
+        _suspendedUntil = State(initialValue: SharedStore.suspendedUntil)
+    }
 
     private var isScheduleBlocking: Bool {
         !activeSchedules.isEmpty
