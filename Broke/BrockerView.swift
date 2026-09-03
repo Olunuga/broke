@@ -99,13 +99,16 @@ struct BrokerView: View {
         .onAppear { refreshScheduleBlockingState() }
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .active {
-                // The blocked-screen display and the real ManagedSettings shield are
-                // computed independently — a missed extension callback (e.g. a wake-up
-                // that failed to register) wouldn't show up as wrong on screen without
-                // this. Re-running sync on every foreground catches that regardless of
-                // why the background path missed it.
+                // sync() re-verifies real enforcement — a missed extension callback
+                // (e.g. a wake-up that failed to register) wouldn't show up as wrong
+                // otherwise. It does not, on its own, drive the display: reading
+                // SharedStore for display immediately after resuming caught a
+                // transient state where a background extension callback that crossed
+                // a schedule boundary while the app was suspended hadn't been
+                // delivered yet, showing a schedule then hiding it again — the poll
+                // timer's next tick, a few seconds later, always had the correct
+                // answer. Leaving the display to that same poll avoids the gap.
                 ScheduleManager.sync(profiles: profileManager.profiles)
-                refreshScheduleBlockingState()
             }
         }
         .onReceive(refreshTimer) { _ in
@@ -122,6 +125,7 @@ struct BrokerView: View {
                 Text("Active Profile")
                     .font(.headline)
                     .fontWeight(.bold)
+                    .transition(.scale)
             }
 
             if appBlocker.isBlocking {
@@ -129,6 +133,7 @@ struct BrokerView: View {
                     .font(.caption2)
                     .fontWeight(.semibold)
                     .opacity(0.85)
+                    .transition(.scale)
             }
 
             if !activeSchedules.isEmpty {
@@ -144,6 +149,7 @@ struct BrokerView: View {
                         }
                     }
                 }
+                .transition(.scale)
             }
 
             Text(blockButtonLabel)
