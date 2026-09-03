@@ -13,15 +13,27 @@ import Security
 enum TagSecret {
     private static let service = "com.Brokeest.ios.tag"
     private static let account = "tagSecretHash"
+    private static let didRegisterKey = "didRegisterTag"
 
-    /// Whether a tag has ever been written by this install. Gates the create-tag
-    /// button: available until a tag exists, hidden while blocking once one does.
+    /// Whether a tag has been written successfully. Deliberately not "is a hash
+    /// stored" — a hash exists from the moment a secret is generated, including when
+    /// the write that followed it failed. Gating the create-tag button on hash
+    /// presence would hide the button after a failed write, leaving no way to retry.
+    ///
+    /// Set only once the NFC write reports success. If the app dies between a
+    /// successful write and this being set, the button stays available and the tag
+    /// still works — visible when it needn't be, rather than locked out.
     static var isRegistered: Bool {
-        storedHash() != nil
+        SharedStore.defaults.bool(forKey: didRegisterKey)
     }
 
-    /// Generates a new secret, stores its hash, and returns the secret to write to a
-    /// tag. Any tag written earlier stops working.
+    static func markRegistered() {
+        SharedStore.defaults.set(true, forKey: didRegisterKey)
+    }
+
+    /// Generates a new secret and stores its hash, returning the secret to write to a
+    /// tag. Any tag written earlier stops working from here, whether or not the write
+    /// that follows succeeds.
     static func generate() -> String? {
         var bytes = [UInt8](repeating: 0, count: 32)
         guard SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes) == errSecSuccess else {

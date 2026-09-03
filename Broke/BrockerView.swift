@@ -16,6 +16,7 @@ struct BrokerView: View {
     @StateObject private var nfcReader = NFCReader()
     @Environment(\.scenePhase) private var scenePhase
     @State private var showWrongTagAlert = false
+    @State private var showExtendConfirmation = false
     @State private var showCreateTagAlert = false
     @State private var showWriteResultAlert = false
     @State private var nfcWriteSuccess = false
@@ -90,6 +91,14 @@ struct BrokerView: View {
                 Button("Cancel", role: .cancel) { }
             } message: {
                 Text("Do you want to create a new Broker tag?")
+            }
+            .alert("Extend \(extensionMinutes) Minutes", isPresented: $showExtendConfirmation) {
+                Button("Extend") { extendSuspension() }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text(remainingExtensions == 1
+                     ? "This is your last extension today."
+                     : "You'll have \(remainingExtensions - 1) left today.")
             }
             .alert("Tag Creation", isPresented: $showWriteResultAlert) {
                 Button("OK", role: .cancel) { }
@@ -202,7 +211,7 @@ struct BrokerView: View {
     @ViewBuilder
     private var extendButton: some View {
         if remainingExtensions > 0 {
-            Button(action: extendSuspension) {
+            Button(action: { showExtendConfirmation = true }) {
                 Text("Extend \(extensionMinutes) min · \(remainingExtensions) left today")
                     .font(.caption2)
                     .fontWeight(.semibold)
@@ -342,10 +351,8 @@ struct BrokerView: View {
     }
     #endif
     
-    /// Generates the secret before writing, so a failed write leaves a stored hash
-    /// with no matching tag. Writing again recovers from that; the alternative —
-    /// storing only after a successful write — would leave a valid tag in the world
-    /// that the app doesn't recognise, which is worse.
+    /// Registration is recorded only once the write reports success, so a failed
+    /// write leaves the button available to retry.
     private func createBrokerTag() {
         guard let secret = TagSecret.generate() else {
             nfcWriteSuccess = false
@@ -355,6 +362,9 @@ struct BrokerView: View {
         }
 
         nfcReader.write(secret) { success in
+            if success {
+                TagSecret.markRegistered()
+            }
             nfcWriteSuccess = success
             showCreateTagAlert = false
             showWriteResultAlert = true

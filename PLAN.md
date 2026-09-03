@@ -229,7 +229,8 @@ while nothing is schedule-blocking falls through to the pre-existing manual togg
 unchanged.
 
 Two 15-minute extensions per day are available without a tag, from a button on the
-blocked screen showing how many remain (`ScheduleManager.extendSuspension`). The tag
+blocked screen showing how many remain (`ScheduleManager.extendSuspension`), behind a
+confirmation naming how many will be left. The tag
 carries physical friction — it has to be to hand — so the extensions exist for when it
 isn't, and the daily cap keeps them an exception rather than a way around it. The
 count is date-stamped and refills at midnight on its own, like the outside-window
@@ -349,10 +350,10 @@ made during the 30 minutes doesn't cancel the automatic re-block.
 
   secret. Only its SHA256 hash is kept, in the Keychain
   (`kSecAttrAccessibleAfterFirstUnlock`), so reading the stored value back off the
-  device yields nothing writable to a tag. The secret is generated before the write
-  is attempted: a failed write leaves a hash with no matching tag, recoverable by
-  writing again, which is preferable to a valid tag existing that the app doesn't
-  recognise.
+  device yields nothing writable to a tag. Registration is recorded separately, and
+  only once the NFC write reports success — gating the create-tag button on hash
+  presence instead would hide it after a failed write, with a hash stored, no tag
+  carrying it, and no way to retry.
 - [ ] **you** Write a new tag. The old fixed-phrase tag no longer works, and until a
 
   new one is written no tag can suspend a schedule — only the daily extensions can.
