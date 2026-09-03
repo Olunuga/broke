@@ -30,10 +30,6 @@ struct BrokerView: View {
         !activeSchedules.isEmpty
     }
 
-    private var activeScheduleNames: [String] {
-        activeSchedules.map { $0.name }
-    }
-
     /// A suspension makes `isScheduleBlocking` false the same as "nothing scheduled"
     /// — this is what lets the screen tell the two apart.
     private var isSuspended: Bool {
@@ -122,19 +118,28 @@ struct BrokerView: View {
     @ViewBuilder
     private func blockOrUnblockButton(geometry: GeometryProxy) -> some View {
         VStack(spacing: 8) {
-            if let blockSourceDescription {
-                Text(blockSourceDescription)
+            if appBlocker.isBlocking {
+                Text("Blocked manually")
                     .font(.caption2)
                     .fontWeight(.semibold)
                     .opacity(0.85)
                     .transition(.scale)
             }
 
-            ForEach(activeSchedules) { schedule in
-                Text(scheduleDetailLabel(for: schedule))
-                    .font(.caption2)
-                    .opacity(0.7)
-                    .transition(.scale)
+            if !activeSchedules.isEmpty {
+                VStack(spacing: 6) {
+                    ForEach(activeSchedules) { schedule in
+                        VStack(spacing: 1) {
+                            Text(schedule.name)
+                                .font(.caption2)
+                                .fontWeight(.semibold)
+                            Text(scheduleDetailLabel(for: schedule))
+                                .font(.caption2)
+                                .opacity(0.7)
+                        }
+                    }
+                }
+                .transition(.scale)
             }
 
             Text(blockButtonLabel)
@@ -157,19 +162,6 @@ struct BrokerView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .frame(height: isBlocked ? geometry.size.height : geometry.size.height / 2)
         .animation(.spring(), value: isBlocked)
-    }
-
-    private var blockSourceDescription: String? {
-        switch (appBlocker.isBlocking, isScheduleBlocking) {
-        case (true, true):
-            return "Blocked manually, and by schedule: \(activeScheduleNames.joined(separator: ", "))"
-        case (true, false):
-            return "Blocked manually"
-        case (false, true):
-            return "Blocked by schedule: \(activeScheduleNames.joined(separator: ", "))"
-        case (false, false):
-            return nil
-        }
     }
 
     private var earlyUnblockMinutesLabel: String {
