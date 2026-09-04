@@ -37,6 +37,7 @@ enum SharedStore {
         static let knownScheduleIds = "knownScheduleIds"
         static let emergencyUnblocksUsedDate = "emergencyUnblocksUsedDateKey"
         static let emergencyUnblocksUsedCount = "emergencyUnblocksUsedCountKey"
+        static let profileEditUnlockedUntil = "profileEditUnlockedUntil"
     }
 
     // MARK: - Suspension durations
@@ -44,6 +45,7 @@ enum SharedStore {
     static let suspensionDuration: TimeInterval = 60 * 60
     static let emergencyUnblockDuration: TimeInterval = 15 * 60
     static let maximumEmergencyUnblocks = 5
+    static let profileEditAccessDuration: TimeInterval = 10 * 60
 
     // MARK: - Profiles
 
@@ -100,8 +102,15 @@ enum SharedStore {
     // MARK: - Suspension (NFC early unblock, phase 6)
 
     static var suspendedUntil: Date? {
-        get { defaults.object(forKey: Key.suspendedUntil) as? Date }
-        set { defaults.set(newValue, forKey: Key.suspendedUntil) }
+        defaults.object(forKey: Key.suspendedUntil) as? Date
+    }
+
+    static func beginSuspension(until date: Date) {
+        defaults.set(date, forKey: Key.suspendedUntil)
+    }
+
+    static func clearSuspension() {
+        defaults.removeObject(forKey: Key.suspendedUntil)
     }
 
     /// Emergency unblocks taken this calendar month. One stored date plus a count is
@@ -182,6 +191,24 @@ enum SharedStore {
     /// something is blocked and lift once nothing is.
     static var isAnythingBlocking: Bool {
         isManuallyBlocking || isAnyScheduleBlocking()
+    }
+
+    // MARK: - Profile editing access
+
+    /// Editing a profile changes what every block covers, so a tag scan grants it for
+    /// `profileEditAccessDuration` and nothing else does.
+    static func grantProfileEditAccess() {
+        defaults.set(Date().addingTimeInterval(profileEditAccessDuration), forKey: Key.profileEditUnlockedUntil)
+    }
+
+    static func revokeProfileEditAccess() {
+        defaults.removeObject(forKey: Key.profileEditUnlockedUntil)
+    }
+
+    static var isProfileEditingUnlocked: Bool {
+        guard !isAnythingBlocking,
+              let unlockedUntil = defaults.object(forKey: Key.profileEditUnlockedUntil) as? Date else { return false }
+        return Date() < unlockedUntil
     }
 
     // MARK: - One-time migration from UserDefaults.standard

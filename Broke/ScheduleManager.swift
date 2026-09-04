@@ -63,7 +63,7 @@ enum ScheduleManager {
     /// Suspends every schedule's block for `duration`, effective immediately, and
     /// arranges for it to resume automatically when the suspension ends.
     static func suspendActiveSchedules(for duration: TimeInterval, profiles: [Profile]) {
-        SharedStore.suspendedUntil = Date().addingTimeInterval(duration)
+        SharedStore.beginSuspension(until: Date().addingTimeInterval(duration))
         sync(profiles: profiles)
     }
 

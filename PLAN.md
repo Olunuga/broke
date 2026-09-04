@@ -330,16 +330,24 @@ made during the 30 minutes doesn't cancel the automatic re-block.
   the app-removal/passcode/accounts/date-time/Siri restrictions active, and gone once
   nothing is blocking. Turn on the web allowlist for a profile with one or two sites
   selected, block it, and confirm only those sites load.
-- [x] Editing any profile setting (schedules included) while blocking is active — this
+- [x] Editing any profile setting (schedules included) without a tag scan.
 
-  was largely already true by construction: `ProfilesPicker`, the only path to
-  `ProfileFormView` → `ScheduleListView` → `ScheduleFormView`, only renders when
-  `!isBlocked` in `BrokerView`, and the only way to clear `isBlocked` while a schedule
-  is active is a tag scan. The remaining gap was a sheet already open when a schedule
-  triggers mid-edit: `ProfileFormView` now polls `SharedStore.isAnythingBlocking` every
-  5 seconds and on appear, dismissing itself immediately if blocking starts while
-  presented — explicit, rather than relying on the sheet being torn down implicitly
-  when `ProfilesPicker` leaves the view tree.
+  A tag scan is the only thing that opens `ProfileFormView` → `ScheduleListView` →
+  `ScheduleFormView`. `SharedStore.grantProfileEditAccess()` runs on every verified
+  scan and unlocks editing for `profileEditAccessDuration` (10 minutes);
+  `isProfileEditingUnlocked` also reads false whenever anything is blocking. While
+  locked, `ProfilesPicker` still lists profiles and still switches the active one, but
+  the long-press edit and the "New..." cell start a scan instead, and the footer is a
+  "Scan tag to edit profiles" button. Editing stays open until the first tag is
+  registered, since there is nothing to scan before that.
+
+  The grant is revoked when a block starts (the home screen's 1-second refresh) and
+  when the app goes to the background, so neither an emergency unblock nor a schedule
+  ending hands back an unlock the tag was never scanned for. A sheet already open when
+  a schedule triggers mid-edit is covered separately: `ProfileFormView` polls
+  `SharedStore.isAnythingBlocking` every 5 seconds and on appear, dismissing itself
+  rather than relying on the sheet being torn down implicitly when `ProfilesPicker`
+  leaves the view tree.
 - [x] The "+" create-tag button is gated on `!TagSecret.isRegistered || !isBlocked`,
 
   not on `isBlocked` alone. A schedule starts without a tag scan, so gating on
