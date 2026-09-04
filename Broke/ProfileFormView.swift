@@ -21,8 +21,7 @@ struct ProfileFormView: View {
     let profile: Profile?
     let onDismiss: () -> Void
 
-    /// `ProfilesPicker`, the only path to this view, is hidden while anything is
-    /// blocking — so reaching this screen already means a tag scan cleared the way.
+    /// `ProfilesPicker`, the only path to this view, opens it only after a tag scan.
     /// This guards the case where blocking starts (a schedule triggers) while the
     /// sheet is already open, rather than relying on it being torn down implicitly
     /// when its presenting ancestor leaves the view tree.

@@ -22,6 +22,7 @@ struct BrokerView: View {
     @State private var nfcWriteSuccess = false
     @State private var activeSchedules: [Schedule]
     @State private var suspendedUntil: Date?
+    @State private var isProfileEditingUnlocked: Bool
     @State private var remainingEmergencyUnblocks: Int
     @State private var isTagRegistered: Bool
     private let refreshTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -32,6 +33,7 @@ struct BrokerView: View {
     init() {
         _activeSchedules = State(initialValue: SharedStore.activeBlockingSchedules())
         _suspendedUntil = State(initialValue: SharedStore.suspendedUntil)
+        _isProfileEditingUnlocked = State(initialValue: SharedStore.isProfileEditingUnlocked)
         _remainingEmergencyUnblocks = State(initialValue: SharedStore.remainingEmergencyUnblocks)
         _isTagRegistered = State(initialValue: TagSecret.isRegistered)
     }
@@ -60,6 +62,11 @@ struct BrokerView: View {
         appBlocker.isBlocking || isScheduleBlocking
     }
 
+    /// Until a tag is registered there is nothing to scan, so editing stays open.
+    private var canEditProfiles: Bool {
+        !isTagRegistered || isProfileEditingUnlocked
+    }
+
     var body: some View {
         NavigationView {
             GeometryReader { geometry in
@@ -70,8 +77,12 @@ struct BrokerView: View {
                         if !isBlocked {
                             Divider()
 
-                            ProfilesPicker(profileManager: profileManager)
-                                .frame(height: geometry.size.height / 2)
+                            ProfilesPicker(
+                                profileManager: profileManager,
+                                isEditingUnlocked: canEditProfiles,
+                                onRequestUnlock: scanToUnlockProfileEditing
+                            )
+                            .frame(height: geometry.size.height / 2)
                                 .transition(.move(edge: .bottom))
                         }
                     }
@@ -117,6 +128,9 @@ struct BrokerView: View {
             refreshScheduleBlockingState()
         }
         .onChange(of: scenePhase) { newPhase in
+            if newPhase == .background {
+                SharedStore.revokeProfileEditAccess()
+            }
             if newPhase == .active {
                 // sync() re-verifies real enforcement — a missed extension callback
                 // (e.g. a wake-up that failed to register) wouldn't show up as wrong
@@ -289,6 +303,13 @@ struct BrokerView: View {
         activeSchedules = SharedStore.activeBlockingSchedules()
         suspendedUntil = SharedStore.suspendedUntil
         remainingEmergencyUnblocks = SharedStore.remainingEmergencyUnblocks
+
+        // A block starting ends the grant outright, so an unblock later in its window
+        // doesn't hand back editing the tag was never scanned for.
+        if SharedStore.isAnythingBlocking {
+            SharedStore.revokeProfileEditAccess()
+        }
+        isProfileEditingUnlocked = SharedStore.isProfileEditingUnlocked
     }
 
     private func scanTag() {
@@ -298,6 +319,8 @@ struct BrokerView: View {
                 NSLog("Wrong Tag!")
                 return
             }
+
+            SharedStore.grantProfileEditAccess()
 
             // Re-check fresh rather than trust `isScheduleBlocking` — that @State can
             // be stale by up to the poll interval, and taking the wrong branch here
@@ -312,7 +335,22 @@ struct BrokerView: View {
             refreshScheduleBlockingState()
         }
     }
-    
+
+    /// Unlocks profile editing without touching what is blocked, for a scan made to
+    /// edit rather than to block or unblock.
+    private func scanToUnlockProfileEditing() {
+        nfcReader.scan { payload in
+            guard TagSecret.matches(payload) else {
+                showWrongTagAlert = true
+                NSLog("Wrong Tag!")
+                return
+            }
+
+            SharedStore.grantProfileEditAccess()
+            refreshScheduleBlockingState()
+        }
+    }
+
     /// Gated on whether a tag exists, not on `isBlocked`. Until one is registered this
     /// stays available even while blocking, since a schedule starts without a tag scan
     /// and would otherwise leave no way to create the only thing that can suspend it.
@@ -345,7 +383,7 @@ struct BrokerView: View {
 
     #if DEBUG
     private func clearSuspensionForTesting() {
-        SharedStore.suspendedUntil = nil
+        SharedStore.clearSuspension()
         ScheduleManager.sync(profiles: profileManager.profiles)
         refreshScheduleBlockingState()
     }

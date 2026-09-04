@@ -10,6 +10,8 @@ import FamilyControls
 
 struct ProfilesPicker: View {
     @ObservedObject var profileManager: ProfileManager
+    let isEditingUnlocked: Bool
+    let onRequestUnlock: () -> Void
     @State private var showAddProfileView = false
     @State private var editingProfile: Profile?
     
@@ -28,13 +30,21 @@ struct ProfilesPicker: View {
                                 profileManager.setCurrentProfile(id: profile.id)
                             }
                             .onLongPressGesture {
-                                editingProfile = profile
+                                if isEditingUnlocked {
+                                    editingProfile = profile
+                                } else {
+                                    onRequestUnlock()
+                                }
                             }
                     }
                     
                     ProfileCellBase(name: "New...", icon: "plus", appsBlocked: nil, categoriesBlocked: nil, isSelected: false, isDashed: true, hasDivider: false)
                         .onTapGesture {
-                            showAddProfileView = true
+                            if isEditingUnlocked {
+                                showAddProfileView = true
+                            } else {
+                                onRequestUnlock()
+                            }
                         }
                 }
                 .padding(.horizontal, 10)
@@ -42,10 +52,24 @@ struct ProfilesPicker: View {
             
             Spacer()
             
-            Text("Long press on a profile to edit...")
-                .font(.caption2)
-                .foregroundColor(.secondary.opacity(0.7))
+            if isEditingUnlocked {
+                Text("Long press on a profile to edit...")
+                    .font(.caption2)
+                    .foregroundColor(.secondary.opacity(0.7))
+                    .padding(.bottom, 8)
+            } else {
+                Button(action: onRequestUnlock) {
+                    Label("Scan tag to edit profiles", systemImage: "wave.3.right")
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(Color.secondary.opacity(0.2))
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
                 .padding(.bottom, 8)
+            }
         }
         .background(Color("ProfileSectionBackground"))
         .sheet(item: $editingProfile) { profile in
