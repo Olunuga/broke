@@ -61,6 +61,13 @@ struct ScheduleFormView: View {
         }
     }
 
+    private var daysFooter: String {
+        switch mode {
+        case .allow: return "The profile stays blocked all day on the days you do not pick."
+        case .block: return "This schedule does nothing on the days you do not pick."
+        }
+    }
+
     private var budgetToggleLabel: String {
         mode == .allow ? "Limit use inside window" : "Limit use outside window"
     }
@@ -107,7 +114,7 @@ struct ScheduleFormView: View {
                         .foregroundColor(.secondary)
                 }
 
-                Section(header: Text("Days")) {
+                Section(header: Text("Days"), footer: Text(daysFooter)) {
                     HStack(spacing: 4) {
                         ForEach(weekdaySymbols, id: \.number) { day in
                             Button(action: { toggle(day.number) }) {

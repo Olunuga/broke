@@ -19,6 +19,8 @@ struct BrokerView: View {
     @State private var showEmergencyUnblockConfirmation = false
     @State private var showCreateTagAlert = false
     @State private var showWriteResultAlert = false
+    @State private var showDiagnostics = false
+    @State private var showBlockingExplanation = false
     @State private var nfcWriteSuccess = false
     @State private var activeSchedules: [Schedule]
     @State private var suspendedUntil: Date?
@@ -89,7 +91,7 @@ struct BrokerView: View {
                     .background(isBlocked ? Color("BlockingBackground") : Color("NonBlockingBackground"))
                 }
             }
-            .navigationBarItems(leading: debugSuspensionControl, trailing: createTagButton)
+            .navigationBarItems(leading: diagnosticsButton, trailing: trailingControls)
             .alert(isPresented: $showWrongTagAlert) {
                 Alert(
                     title: Text("Not a Broker Tag"),
@@ -110,6 +112,16 @@ struct BrokerView: View {
                 Text(remainingEmergencyUnblocks == 1
                      ? "This is your last emergency unblock this month."
                      : "You'll have \(remainingEmergencyUnblocks - 1) left this month.")
+            }
+            .sheet(isPresented: $showBlockingExplanation) {
+                BlockingExplanationView(
+                    profiles: profileManager.profiles,
+                    isManuallyBlocking: appBlocker.isBlocking,
+                    manualProfileName: profileManager.currentProfile.name
+                ) { showBlockingExplanation = false }
+            }
+            .sheet(isPresented: $showDiagnostics) {
+                DiagnosticsView(profiles: profileManager.profiles) { showDiagnostics = false }
             }
             .alert("Tag Creation", isPresented: $showWriteResultAlert) {
                 Button("OK", role: .cancel) { }
@@ -316,20 +328,19 @@ struct BrokerView: View {
         nfcReader.scan { payload in
             guard TagSecret.matches(payload) else {
                 showWrongTagAlert = true
-                NSLog("Wrong Tag!")
+                BrokeLog.log("tag scan rejected: payload does not match")
                 return
             }
 
+            BrokeLog.log("tag scan accepted")
             SharedStore.grantProfileEditAccess()
 
             // Re-check fresh rather than trust `isScheduleBlocking` — that @State can
             // be stale by up to the poll interval, and taking the wrong branch here
             // means the wrong shield gets touched.
             if !SharedStore.activeBlockingSchedules().isEmpty {
-                NSLog("Suspending active schedule for \(Int(SharedStore.suspensionDuration / 60)) minutes")
                 ScheduleManager.suspendActiveSchedules(for: SharedStore.suspensionDuration, profiles: profileManager.profiles)
             } else {
-                NSLog("Toggling block")
                 appBlocker.toggleBlocking(for: profileManager.currentProfile)
             }
             refreshScheduleBlockingState()
@@ -342,10 +353,11 @@ struct BrokerView: View {
         nfcReader.scan { payload in
             guard TagSecret.matches(payload) else {
                 showWrongTagAlert = true
-                NSLog("Wrong Tag!")
+                BrokeLog.log("unlock scan rejected: payload does not match")
                 return
             }
 
+            BrokeLog.log("unlock scan accepted, profile editing open for \(Int(SharedStore.profileEditAccessDuration / 60)) minutes")
             SharedStore.grantProfileEditAccess()
             refreshScheduleBlockingState()
         }
@@ -366,6 +378,31 @@ struct BrokerView: View {
             }
             .disabled(!NFCNDEFReaderSession.readingAvailable)
         }
+    }
+
+    private var trailingControls: some View {
+        HStack(spacing: 16) {
+            if isBlocked {
+                Button(action: { showBlockingExplanation = true }) {
+                    Image(systemName: "info.circle")
+                }
+            }
+            createTagButton
+        }
+    }
+
+    /// Debug builds only. The info sheet covers what a user needs; this one carries
+    /// store counts, activity ids, and the log buffer.
+    @ViewBuilder
+    private var diagnosticsButton: some View {
+        #if DEBUG
+        HStack {
+            Button(action: { showDiagnostics = true }) {
+                Image(systemName: "doc.text.magnifyingglass")
+            }
+            debugSuspensionControl
+        }
+        #endif
     }
 
     /// Debug builds only — a suspension is otherwise only clearable by waiting it out
@@ -408,5 +445,198 @@ struct BrokerView: View {
             showWriteResultAlert = true
             isTagRegistered = TagSecret.isRegistered
         }
+    }
+}
+
+/// The current shield state and the recent log lines, on the device. The monitor
+/// extension writes its lines to the same App Group, so background decisions show
+/// here as well.
+struct DiagnosticsView: View {
+    let profiles: [Profile]
+    let onDismiss: () -> Void
+    @State private var snapshot: [String] = []
+    @State private var logLines: [String] = []
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    section("State now", lines: snapshot)
+                    section("Recent log (newest last)", lines: logLines)
+                }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .navigationTitle("Diagnostics")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarItems(
+                leading: Button("Copy") { UIPasteboard.general.string = allText },
+                trailing: Button("Done") { onDismiss() }
+            )
+            .toolbar {
+                ToolbarItemGroup(placement: .bottomBar) {
+                    Button("Refresh") { reload() }
+                    Spacer()
+                    Button("Clear log", role: .destructive) {
+                        SharedStore.clearLogLines()
+                        reload()
+                    }
+                }
+            }
+        }
+        .onAppear { reload() }
+    }
+
+    private func section(_ title: String, lines: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.headline)
+            ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
+                Text(line)
+                    .font(.system(size: 10, design: .monospaced))
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private var allText: String {
+        (snapshot + [""] + logLines).joined(separator: "\n")
+    }
+
+    private func reload() {
+        snapshot = ScheduleManager.stateSnapshotLines(profiles: profiles)
+        logLines = SharedStore.recentLogLines
+    }
+}
+/// What holds the block right now, source by source, and what ends each one.
+struct BlockingExplanationView: View {
+    let profiles: [Profile]
+    let isManuallyBlocking: Bool
+    let manualProfileName: String
+    let onDismiss: () -> Void
+    @State private var activeSchedules: [Schedule] = []
+
+    var body: some View {
+        NavigationView {
+            List {
+                if !isManuallyBlocking && activeSchedules.isEmpty {
+                    Text("Nothing is blocked right now.")
+                        .font(.callout)
+                }
+
+                if isManuallyBlocking {
+                    Section(header: header(title: "Manual block", badge: "Manual")) {
+                        row("Profile", manualProfileName)
+                        row("Why now", "You turned blocking on")
+                        row("Ends", "Only a tag scan")
+                    }
+                    .textCase(nil)
+                }
+
+                ForEach(activeSchedules) { schedule in
+                    Section(header: header(title: schedule.name, badge: schedule.mode.label)) {
+                        row("Days", daysLabel(for: schedule))
+                        row("Window", windowLabel(for: schedule))
+                        if let limit = limitLabel(for: schedule) {
+                            row("Limit", limit)
+                        }
+                        if let profileName = profileName(for: schedule) {
+                            row("Profile", profileName)
+                        }
+                        row("Why now", reason(for: schedule))
+                        row("Ends", endLabel(for: schedule))
+                    }
+                    .textCase(nil)
+                }
+
+                if isManuallyBlocking || !activeSchedules.isEmpty {
+                    Text("A tag scan suspends every schedule for \(Int(SharedStore.suspensionDuration / 60)) minutes.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .navigationTitle("Why is this blocked?")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarItems(trailing: Button("Done") { onDismiss() })
+        }
+        .onAppear { activeSchedules = SharedStore.activeBlockingSchedules() }
+    }
+
+    private func header(title: String, badge: String) -> some View {
+        HStack {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+            Spacer()
+            Text(badge)
+                .font(.caption2)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 2)
+                .background(Color.secondary.opacity(0.15))
+                .clipShape(Capsule())
+        }
+    }
+
+    private func row(_ label: String, _ value: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(width: 74, alignment: .leading)
+            Text(value)
+                .font(.caption)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private func profileName(for schedule: Schedule) -> String? {
+        profiles.first { $0.schedules.contains { $0.id == schedule.id } }?.name
+    }
+
+    private func daysLabel(for schedule: Schedule) -> String {
+        guard schedule.weekdays.count < 7 else { return "Every day" }
+        let symbols = Calendar.current.shortWeekdaySymbols
+        return schedule.weekdays.sorted()
+            .compactMap { $0 >= 1 && $0 <= 7 ? symbols[$0 - 1] : nil }
+            .joined(separator: ", ")
+    }
+
+    private func windowLabel(for schedule: Schedule) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h:mm a"
+        let start = Calendar.current.date(from: schedule.startTime) ?? Date()
+        let end = Calendar.current.date(from: schedule.endTime) ?? Date()
+        return "\(formatter.string(from: start)) to \(formatter.string(from: end))"
+    }
+
+    /// A budget caps use inside the window for `.allow` and outside it for `.block`,
+    /// and resets daily in both.
+    private func limitLabel(for schedule: Schedule) -> String? {
+        guard let budgetMinutes = schedule.budgetMinutes else { return nil }
+        let scope = schedule.mode == .allow ? "inside window" : "outside window"
+        return "\(budgetMinutes) min/day \(scope)"
+    }
+
+    private func reason(for schedule: Schedule) -> String {
+        if schedule.mode == .allow {
+            return schedule.isActiveToday()
+                ? "Outside the allowed window"
+                : "Not a \(daysLabel(for: schedule)) day, so blocked all day"
+        }
+        return schedule.wantsBlock()
+            ? "Inside the blocked window"
+            : "Daily limit outside the window is spent"
+    }
+
+    private func endLabel(for schedule: Schedule) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE h:mm a"
+        guard let next = schedule.nextTransition(), !schedule.wantsBlock(referenceDate: next.addingTimeInterval(60)) else {
+            return "Only a tag scan"
+        }
+        return formatter.string(from: next)
     }
 }

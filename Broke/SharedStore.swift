@@ -8,6 +8,7 @@
 import Foundation
 import DeviceActivity
 import ManagedSettings
+import os
 
 enum SharedStore {
     static let appGroupID = "group.com.Brokeest.ios"
@@ -38,6 +39,7 @@ enum SharedStore {
         static let emergencyUnblocksUsedDate = "emergencyUnblocksUsedDateKey"
         static let emergencyUnblocksUsedCount = "emergencyUnblocksUsedCountKey"
         static let profileEditUnlockedUntil = "profileEditUnlockedUntil"
+        static let recentLogLines = "recentLogLines"
     }
 
     // MARK: - Suspension durations
@@ -211,6 +213,29 @@ enum SharedStore {
         return Date() < unlockedUntil
     }
 
+    // MARK: - Log lines
+
+    /// The app cannot read the extension's os_log output, so every line is also kept
+    /// here, in the App Group both processes share.
+    static let maximumStoredLogLines = 400
+
+    static var recentLogLines: [String] {
+        defaults.stringArray(forKey: Key.recentLogLines) ?? []
+    }
+
+    static func appendLogLine(_ line: String) {
+        var lines = recentLogLines
+        lines.append(line)
+        if lines.count > maximumStoredLogLines {
+            lines.removeFirst(lines.count - maximumStoredLogLines)
+        }
+        defaults.set(lines, forKey: Key.recentLogLines)
+    }
+
+    static func clearLogLines() {
+        defaults.removeObject(forKey: Key.recentLogLines)
+    }
+
     // MARK: - One-time migration from UserDefaults.standard
 
     /// Earlier versions stored profiles and blocking state in `UserDefaults.standard`,
@@ -234,3 +259,55 @@ enum SharedStore {
         defaults.set(true, forKey: Key.didMigrateFromStandardDefaults)
     }
 }
+
+/// One log channel for the app and the extension, so a shield decision made in the
+/// background reads in the same stream as the app's own.
+/// Stream it with: log stream --predicate 'subsystem == "com.Brokeest.ios"'
+enum BrokeLog {
+    private static let logger = Logger(subsystem: "com.Brokeest.ios", category: "broke")
+
+    private static let timestampFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return formatter
+    }()
+
+    private static let lineFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MM-dd HH:mm:ss"
+        return formatter
+    }()
+
+    // Every value is marked public: this is the user's own device state, and it reads
+    // as <private> in Console otherwise.
+    static func log(_ message: String) {
+        logger.notice("\(message, privacy: .public)")
+        SharedStore.appendLogLine("\(lineFormatter.string(from: Date())) \(message)")
+    }
+
+    static func timestamp(_ date: Date?) -> String {
+        guard let date else { return "none" }
+        return timestampFormatter.string(from: date)
+    }
+
+    /// What a store currently shields, by count rather than by token, so a line stays
+    /// readable and carries no token payload.
+    static func describe(_ store: ManagedSettingsStore) -> String {
+        let apps = store.shield.applications?.count ?? 0
+        let webDomains = store.shield.webDomains?.count ?? 0
+        return "apps=\(apps) categories=\(categorySummary(store.shield.applicationCategories)) web=\(webDomains) filter=\(filterSummary(store.webContent.blockedByFilter))"
+    }
+
+    private static func categorySummary<T>(_ policy: ShieldSettings.ActivityCategoryPolicy<T>?) -> String {
+        guard let policy else { return "nil" }
+        if case .none = policy { return "none" }
+        return "shielding"
+    }
+
+    private static func filterSummary(_ policy: WebContentSettings.FilterPolicy?) -> String {
+        guard let policy else { return "nil" }
+        if case .none = policy { return "none" }
+        return "restricting"
+    }
+}
+
