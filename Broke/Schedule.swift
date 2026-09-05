@@ -25,7 +25,7 @@ enum ScheduleMode: String, Codable, CaseIterable, Identifiable {
         case .block:
             return "This profile is blocked during the window below."
         case .allow:
-            return "This profile is only usable during the window below. It's blocked the rest of the day."
+            return "This profile is usable only inside the window below, on the days you pick. It stays blocked at every other time, including whole days you do not pick."
         }
     }
 }
@@ -175,3 +175,23 @@ struct Schedule: Codable, Identifiable, Equatable {
         return earliest
     }
 }
+
+extension Schedule {
+    /// Every input `effectiveWantsBlock()` reads, in one line, so a shield that is on
+    /// can be traced to the value that put it there.
+    func decisionSummary(referenceDate: Date = Date(), calendar: Calendar = .current) -> String {
+        let window = String(
+            format: "%02d:%02d-%02d:%02d",
+            startTime.hour ?? 0, startTime.minute ?? 0, endTime.hour ?? 0, endTime.minute ?? 0
+        )
+        return "schedule '\(name)' [\(id.uuidString.prefix(8))] mode=\(mode.rawValue)"
+            + " enabled=\(isEnabled) valid=\(isValid) weekdays=\(weekdays.sorted()) window=\(window)"
+            + " today=\(isActiveToday(referenceDate: referenceDate, calendar: calendar))"
+            + " inWindow=\(isWithinWindow(referenceDate: referenceDate, calendar: calendar))"
+            + " budgetMinutes=\(budgetMinutes.map(String.init) ?? "none")"
+            + " budgetSpent=\(SharedStore.isOutsideWindowBudgetExceeded(for: id))"
+            + " wantsBlock=\(wantsBlock(referenceDate: referenceDate, calendar: calendar))"
+            + " effectiveWantsBlock=\(effectiveWantsBlock(referenceDate: referenceDate, calendar: calendar))"
+    }
+}
+
