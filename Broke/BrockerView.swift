@@ -322,6 +322,8 @@ struct BrokerView: View {
             SharedStore.revokeProfileEditAccess()
         }
         isProfileEditingUnlocked = SharedStore.isProfileEditingUnlocked
+
+        LiveActivityController.refresh(profiles: profileManager.profiles)
     }
 
     private func scanTag() {
@@ -399,6 +401,9 @@ struct BrokerView: View {
             Button(action: { showDiagnostics = true }) {
                 Image(systemName: "doc.text.magnifyingglass")
             }
+            Button(action: startTestSuspension) {
+                Image(systemName: "timer")
+            }
             #endif
             resumeBlockingControl
         }
@@ -414,6 +419,14 @@ struct BrokerView: View {
             }
         }
     }
+
+    #if DEBUG
+    /// A suspension short enough to watch the Live Activity start, count down, and end.
+    private func startTestSuspension() {
+        ScheduleManager.suspendActiveSchedules(for: 10, profiles: profileManager.profiles)
+        refreshScheduleBlockingState()
+    }
+    #endif
 
     private func resumeBlockingNow() {
         BrokeLog.log("user ended the suspension early")

@@ -38,6 +38,11 @@
 		F5A3B05F2C733E3400BD6C7F /* BrokeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5A3B05E2C733E3400BD6C7F /* BrokeApp.swift */; };
 		F5A3B0632C733E3500BD6C7F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F5A3B0622C733E3500BD6C7F /* Assets.xcassets */; };
 		F5A3B0662C733E3500BD6C7F /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F5A3B0652C733E3500BD6C7F /* Preview Assets.xcassets */; };
+		AC1000000000000000000600 /* SuspensionActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1000000000000000000100 /* SuspensionActivityAttributes.swift */; };
+		AC1000000000000000000700 /* LiveActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1000000000000000000200 /* LiveActivityController.swift */; };
+		AC1000000000000000000800 /* SuspensionActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1000000000000000000100 /* SuspensionActivityAttributes.swift */; };
+		AC1000000000000000000900 /* BrokeActivityBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1000000000000000000300 /* BrokeActivityBundle.swift */; };
+		AC1000000000000000000A00 /* BrokeActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AC1000000000000000000500 /* BrokeActivity.appex */; settings = {ATTRIBUTES = (RemoveHeaderOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -50,6 +55,7 @@
 				8FEAC78AEC8DAA5BA47A0A97 /* BrokeMonitor.appex in Embed Foundation Extensions */,
 				74B4E7F9DC6AA21473BAFC94 /* BrokeShieldConfig.appex in Embed Foundation Extensions */,
 				6F24FC1EBAFB6A4D6ADE436B /* BrokeShieldAction.appex in Embed Foundation Extensions */,
+				AC1000000000000000000A00 /* BrokeActivity.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -78,6 +84,13 @@
 			remoteGlobalIDString = A26B3D04DCC53495E89BD17F;
 			remoteInfo = BrokeShieldAction;
 		};
+		AC1000000000000000001400 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F5A3B0532C733E3400BD6C7F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AC1000000000000000000C00;
+			remoteInfo = BrokeActivity;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXTargetDependency section */
@@ -95,6 +108,11 @@
 			isa = PBXTargetDependency;
 			target = A26B3D04DCC53495E89BD17F /* BrokeShieldAction */;
 			targetProxy = F4665D6273392409973DA31A /* PBXContainerItemProxy */;
+		};
+		AC1000000000000000001300 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AC1000000000000000000C00 /* BrokeActivity */;
+			targetProxy = AC1000000000000000001400 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -133,6 +151,11 @@
 		F5A3B0622C733E3500BD6C7F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F5A3B0652C733E3500BD6C7F /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		F5A3B06C2C733EA200BD6C7F /* Broke.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Broke.entitlements; sourceTree = "<group>"; };
+		AC1000000000000000000100 /* SuspensionActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuspensionActivityAttributes.swift; sourceTree = "<group>"; };
+		AC1000000000000000000200 /* LiveActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityController.swift; sourceTree = "<group>"; };
+		AC1000000000000000000300 /* BrokeActivityBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrokeActivityBundle.swift; sourceTree = "<group>"; };
+		AC1000000000000000000400 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		AC1000000000000000000500 /* BrokeActivity.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BrokeActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -166,6 +189,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AC1000000000000000000E00 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -184,6 +214,7 @@
 				3CD2A215CD4CEEB86C6EBA33 /* BrokeMonitor */,
 				8C841F37913B93E15149AA22 /* BrokeShieldConfig */,
 				70B530604C16709CD731007D /* BrokeShieldAction */,
+				AC1000000000000000000B00 /* BrokeActivity */,
 				F5A3B05C2C733E3400BD6C7F /* Products */,
 				F51C38CF2C77594E003B4EB3 /* Frameworks */,
 			);
@@ -196,6 +227,7 @@
 				93C5B49DE5BE6A95E2A8785F /* BrokeMonitor.appex */,
 				FFB4FDAA9EDBC55CD7285397 /* BrokeShieldConfig.appex */,
 				A0B5DFC48B8DB40A52D4CA5F /* BrokeShieldAction.appex */,
+				AC1000000000000000000500 /* BrokeActivity.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -223,6 +255,8 @@
 				F5A3B0622C733E3500BD6C7F /* Assets.xcassets */,
 				F5A3B0642C733E3500BD6C7F /* Preview Content */,
 				F51C38E92C78B47A003B4EB3 /* ProfileFormView.swift */,
+				AC1000000000000000000100 /* SuspensionActivityAttributes.swift */,
+				AC1000000000000000000200 /* LiveActivityController.swift */,
 			);
 			path = Broke;
 			sourceTree = "<group>";
@@ -265,6 +299,15 @@
 			path = BrokeShieldAction;
 			sourceTree = "<group>";
 		};
+		AC1000000000000000000B00 /* BrokeActivity */ = {
+			isa = PBXGroup;
+			children = (
+				AC1000000000000000000300 /* BrokeActivityBundle.swift */,
+				AC1000000000000000000400 /* Info.plist */,
+			);
+			path = BrokeActivity;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -283,6 +326,7 @@
 				15B4E1D6C9FFAF6AC730475B /* PBXTargetDependency */,
 				199FB4D29E727B21AEFE54B4 /* PBXTargetDependency */,
 				562DE291A05B96ED2AF5121B /* PBXTargetDependency */,
+				AC1000000000000000001300 /* PBXTargetDependency */,
 			);
 			name = Broke;
 			packageProductDependencies = (
@@ -343,6 +387,23 @@
 			productReference = A0B5DFC48B8DB40A52D4CA5F /* BrokeShieldAction.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		AC1000000000000000000C00 /* BrokeActivity */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AC1000000000000000001000 /* Build configuration list for PBXNativeTarget "BrokeActivity" */;
+			buildPhases = (
+				AC1000000000000000000D00 /* Sources */,
+				AC1000000000000000000E00 /* Frameworks */,
+				AC1000000000000000000F00 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BrokeActivity;
+			productName = BrokeActivity;
+			productReference = AC1000000000000000000500 /* BrokeActivity.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -363,6 +424,9 @@
 						CreatedOnToolsVersion = 14.3.1;
 					};
 					A26B3D04DCC53495E89BD17F = {
+						CreatedOnToolsVersion = 14.3.1;
+					};
+					AC1000000000000000000C00 = {
 						CreatedOnToolsVersion = 14.3.1;
 					};
 				};
@@ -387,6 +451,7 @@
 				6B1216F043097BF0C418D0B1 /* BrokeMonitor */,
 				31067064D12D81A27CDB5AA2 /* BrokeShieldConfig */,
 				A26B3D04DCC53495E89BD17F /* BrokeShieldAction */,
+				AC1000000000000000000C00 /* BrokeActivity */,
 			);
 		};
 /* End PBXProject section */
@@ -422,6 +487,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AC1000000000000000000F00 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -430,6 +502,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				F51C38EA2C78B47A003B4EB3 /* ProfileFormView.swift in Sources */,
+				AC1000000000000000000600 /* SuspensionActivityAttributes.swift in Sources */,
+				AC1000000000000000000700 /* LiveActivityController.swift in Sources */,
 				F51C38DB2C775D0B003B4EB3 /* BrockerView.swift in Sources */,
 				F51C38D92C775CEC003B4EB3 /* NfcReader.swift in Sources */,
 				F51C38E12C77DADA003B4EB3 /* ProfileManager.swift in Sources */,
@@ -474,6 +548,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				E70F93E53E83D5E9FD5E8BD8 /* ShieldActionExtension.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AC1000000000000000000D00 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AC1000000000000000000900 /* BrokeActivityBundle.swift in Sources */,
+				AC1000000000000000000800 /* SuspensionActivityAttributes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -854,6 +937,62 @@
 			};
 			name = Release;
 		};
+		AC1000000000000000001100 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CH4P23R94R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BrokeActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BrokeActivity;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Brokeest.ios.BrokeActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		AC1000000000000000001200 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CH4P23R94R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BrokeActivity/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = BrokeActivity;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Brokeest.ios.BrokeActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -898,6 +1037,15 @@
 			buildConfigurations = (
 				F5A3B06A2C733E3500BD6C7F /* Debug */,
 				F5A3B06B2C733E3500BD6C7F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AC1000000000000000001000 /* Build configuration list for PBXNativeTarget "BrokeActivity" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AC1000000000000000001100 /* Debug */,
+				AC1000000000000000001200 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
