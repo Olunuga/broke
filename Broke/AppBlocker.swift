@@ -47,9 +47,10 @@ class AppBlocker: ObservableObject {
     
     func applyBlockingSettings(for profile: Profile) {
         if isBlocking {
-            NSLog("Blocking \(profile.appTokens.count) apps, \(profile.webDomainTokens.count) websites")
+            BrokeLog.log("manual block on: profile='\(profile.name)' apps=\(profile.appTokens.count) categories=\(profile.categoryTokens.count) web=\(profile.webDomainTokens.count)")
             ShieldWriter.apply(profile, to: store)
         } else {
+            BrokeLog.log("manual block off")
             ShieldWriter.clear(store)
         }
         HardeningManager.refresh()
