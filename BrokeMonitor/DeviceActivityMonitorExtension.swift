@@ -10,6 +10,7 @@ import ManagedSettings
 class DeviceActivityMonitorExtension: DeviceActivityMonitor {
     override func intervalDidStart(for activity: DeviceActivityName) {
         super.intervalDidStart(for: activity)
+        BrokeLog.log("intervalDidStart: activity=\(activity.rawValue)")
         guard activity != SharedStore.resumeCheckActivityName else { return }
 
         if let (profile, schedule) = SharedStore.schedule(forOutsideWindowActivity: activity) {
@@ -28,6 +29,7 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
 
     override func intervalDidEnd(for activity: DeviceActivityName) {
         super.intervalDidEnd(for: activity)
+        BrokeLog.log("intervalDidEnd: activity=\(activity.rawValue)")
         if activity == SharedStore.resumeCheckActivityName {
             // A suspension just ended. Nothing else fires exactly at this moment, so
             // every schedule is re-evaluated here rather than just the one that was
@@ -43,10 +45,12 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
 
     override func eventDidReachThreshold(_ event: DeviceActivityEvent.Name, activity: DeviceActivityName) {
         super.eventDidReachThreshold(event, activity: activity)
+        BrokeLog.log("eventDidReachThreshold: event=\(event.rawValue) activity=\(activity.rawValue) suspended=\(SharedStore.isSuspended)")
 
         if let (profile, schedule) = SharedStore.schedule(forOutsideWindowActivity: activity),
            event == schedule.outsideWindowEventName {
             guard !SharedStore.isSuspended else { return }
+            BrokeLog.log("outside-window budget spent for '\(schedule.name)', enforcing today=\(schedule.isActiveToday())")
             SharedStore.setOutsideWindowBudgetExceeded(true, for: schedule.id)
             // Only enforce if today is actually one of this schedule's days — the
             // tracker runs daily regardless of `weekdays`, since DeviceActivitySchedule
@@ -78,6 +82,7 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
     private func applyState(for activity: DeviceActivityName) {
         guard let scheduleId = UUID(uuidString: activity.rawValue),
               let (profile, schedule) = SharedStore.schedule(withId: scheduleId) else {
+            BrokeLog.log("no schedule matches activity=\(activity.rawValue), nothing applied")
             return
         }
         apply(schedule, profile: profile)
@@ -95,10 +100,12 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
         let store = ManagedSettingsStore(named: schedule.storeName)
 
         guard schedule.isEnabled, !SharedStore.isSuspended, schedule.effectiveWantsBlock() else {
+            BrokeLog.log("extension clears shield: \(schedule.decisionSummary()) suspended=\(SharedStore.isSuspended)")
             ShieldWriter.clear(store)
             return
         }
 
+        BrokeLog.log("extension applies shield: \(schedule.decisionSummary()) profile='\(profile.name)' apps=\(profile.appTokens.count)")
         ShieldWriter.apply(profile, to: store)
     }
 }

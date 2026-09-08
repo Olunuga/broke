@@ -314,8 +314,8 @@ made during the 30 minutes doesn't cancel the automatic re-block.
 
   `refresh()` reads `SharedStore.isAnythingBlocking` (manual toggle or any schedule)
   and sets or clears `denyAppRemoval`, `requireAutomaticDateAndTime`, `lockAccounts`,
-  `lockPasscode`, and `denySiri` together on a dedicated `"broke-hardening"` named
-  store — active exactly while something is blocking, off otherwise. Called from
+  and `lockPasscode` together on a dedicated `"broke-hardening"` named store — active
+  exactly while something is blocking, off otherwise. Called from
   `AppBlocker.applyBlockingSettings`, `ScheduleManager.sync`, and all three of the
   extension's callbacks, so every path that can change what's blocking keeps it in
   sync.
@@ -327,7 +327,7 @@ made during the 30 minutes doesn't cancel the automatic re-block.
   Toggle lives in `ProfileFormView` next to the website configuration.
 - [ ] **you** Test both: with a schedule active, confirm Settings > Screen Time shows
 
-  the app-removal/passcode/accounts/date-time/Siri restrictions active, and gone once
+  the app-removal/passcode/accounts/date-time restrictions active, and gone once
   nothing is blocking. Turn on the web allowlist for a profile with one or two sites
   selected, block it, and confirm only those sites load.
 - [x] Editing any profile setting (schedules included) without a tag scan.
