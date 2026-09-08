@@ -19,6 +19,11 @@ enum HardeningManager {
     /// or clears a schedule's shield.
     static func refresh() {
         BrokeLog.log("hardening refresh: anythingBlocking=\(SharedStore.isAnythingBlocking)")
+
+        // Earlier versions set this, and a store keeps its last written value, so it
+        // stays denied until something writes nil over it. It blocked CarPlay.
+        store.siri.denySiri = nil
+
         if SharedStore.isAnythingBlocking {
             store.application.denyAppRemoval = true
             store.dateAndTime.requireAutomaticDateAndTime = true

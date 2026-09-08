@@ -91,7 +91,7 @@ struct BrokerView: View {
                     .background(isBlocked ? Color("BlockingBackground") : Color("NonBlockingBackground"))
                 }
             }
-            .navigationBarItems(leading: diagnosticsButton, trailing: trailingControls)
+            .navigationBarItems(leading: leadingControls, trailing: trailingControls)
             .alert(isPresented: $showWrongTagAlert) {
                 Alert(
                     title: Text("Not a Broker Tag"),
@@ -391,40 +391,36 @@ struct BrokerView: View {
         }
     }
 
-    /// Debug builds only. The info sheet covers what a user needs; this one carries
-    /// store counts, activity ids, and the log buffer.
-    @ViewBuilder
-    private var diagnosticsButton: some View {
-        #if DEBUG
-        HStack {
+    private var leadingControls: some View {
+        HStack(spacing: 16) {
+            #if DEBUG
+            // The info sheet covers what a user needs; this one carries store counts,
+            // activity ids, and the log buffer.
             Button(action: { showDiagnostics = true }) {
                 Image(systemName: "doc.text.magnifyingglass")
             }
-            debugSuspensionControl
+            #endif
+            resumeBlockingControl
         }
-        #endif
     }
 
-    /// Debug builds only — a suspension is otherwise only clearable by waiting it out
-    /// or scanning the tag again, both slow when iterating on schedule changes.
+    /// Ends a suspension early. Available in every build: it restores blocking, so it
+    /// is never a way around the tag.
     @ViewBuilder
-    private var debugSuspensionControl: some View {
-        #if DEBUG
+    private var resumeBlockingControl: some View {
         if isSuspended {
-            Button(action: clearSuspensionForTesting) {
+            Button(action: resumeBlockingNow) {
                 Image(systemName: "clock.badge.xmark")
             }
         }
-        #endif
     }
 
-    #if DEBUG
-    private func clearSuspensionForTesting() {
+    private func resumeBlockingNow() {
+        BrokeLog.log("user ended the suspension early")
         SharedStore.clearSuspension()
         ScheduleManager.sync(profiles: profileManager.profiles)
         refreshScheduleBlockingState()
     }
-    #endif
     
     /// Registration is recorded only once the write reports success, so a failed
     /// write leaves the button available to retry.
