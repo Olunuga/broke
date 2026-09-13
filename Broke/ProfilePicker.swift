@@ -14,14 +14,14 @@ struct ProfilesPicker: View {
     let onRequestUnlock: () -> Void
     @State private var showAddProfileView = false
     @State private var editingProfile: Profile?
-    
+    @State private var showImporter = false
+    @State private var exportFile: ProfileExportFile?
+    @State private var transferMessage: String?
+
     var body: some View {
         VStack {
-            Text("Profiles")
-                .font(.headline)
-                .padding(.horizontal)
-                .padding(.top)
-            
+            header
+
             ScrollView {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 90), spacing: 10)], spacing: 10) {
                     ForEach(profileManager.profiles) { profile in
@@ -81,6 +81,70 @@ struct ProfilesPicker: View {
             ProfileFormView(profileManager: profileManager) {
                 showAddProfileView = false
             }
+        }
+        .sheet(item: $exportFile) { file in
+            ShareSheet(url: file.url)
+        }
+        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.brokeProfile]) { result in
+            handleImport(result)
+        }
+        .alert(
+            "Profiles",
+            isPresented: Binding(get: { transferMessage != nil }, set: { if !$0 { transferMessage = nil } })
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(transferMessage ?? "")
+        }
+    }
+
+    private var header: some View {
+        HStack {
+            Button(action: startImport) {
+                Image(systemName: "square.and.arrow.down")
+            }
+            Spacer()
+            Text("Profiles")
+                .font(.headline)
+            Spacer()
+            Button(action: exportAll) {
+                Image(systemName: "square.and.arrow.up")
+            }
+            .disabled(profileManager.profiles.isEmpty)
+        }
+        .padding(.horizontal)
+        .padding(.top)
+    }
+
+    private func exportAll() {
+        do {
+            let transfer = ProfileTransfer(exporting: profileManager.profiles)
+            exportFile = ProfileExportFile(url: try transfer.writeToTemporaryFile(named: "Broke Profiles"))
+        } catch {
+            transferMessage = error.localizedDescription
+        }
+    }
+
+    /// An import adds a profile, so it needs the same tag scan the "New..." cell does.
+    private func startImport() {
+        if isEditingUnlocked {
+            showImporter = true
+        } else {
+            onRequestUnlock()
+        }
+    }
+
+    private func handleImport(_ result: Result<URL, Error>) {
+        guard isEditingUnlocked else {
+            onRequestUnlock()
+            return
+        }
+
+        do {
+            let transfer = try ProfileTransfer.read(from: try result.get())
+            transferMessage = profileManager.importProfiles(from: transfer).message
+        } catch {
+            transferMessage = error.localizedDescription
         }
     }
 }

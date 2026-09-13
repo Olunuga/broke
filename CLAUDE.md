@@ -2,9 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Build
+## Build and test
 
-No test target exists. Build is the only check.
+```bash
+xcodebuild test -project Broke.xcodeproj -scheme Broke \
+  -destination 'platform=iOS Simulator,name=iPhone 15 Pro' CODE_SIGNING_ALLOWED=NO
+```
+
+`BrokeTests` is an XCTest bundle hosted by the app, so it inherits the App Group and
+Family Controls entitlements. Subclass `BrokeTestCase`: it points `SharedStore.defaults`
+at a scratch suite and `ScheduleManager`'s two injection points at recorders, then puts
+all three back. Tests cannot build an `ApplicationToken`, so every fixture profile carries
+empty token sets.
 
 ```bash
 xcodebuild -project Broke.xcodeproj -scheme Broke \

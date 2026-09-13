@@ -15,6 +15,7 @@
 		F51C38D22C775953003B4EB3 /* CoreNFC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F51C38D02C77594E003B4EB3 /* CoreNFC.framework */; };
 		F51C38D72C775CAF003B4EB3 /* AppBlocker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F51C38D62C775CAF003B4EB3 /* AppBlocker.swift */; };
 		6CBBA8E18197DB2C67DBBDA0 /* TagSecret.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA9AE70DBF939EDCEF6F14A4 /* TagSecret.swift */; };
+		AC1000000000000000002200 /* ProfileTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1000000000000000002100 /* ProfileTransfer.swift */; };
 		5D5CDEBC1C59886B6BA2F764 /* ShieldConfigurationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B135C6CAEB159A89E45B2CB /* ShieldConfigurationExtension.swift */; };
 		E70F93E53E83D5E9FD5E8BD8 /* ShieldActionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C5464C0A9371F17732F32A2 /* ShieldActionExtension.swift */; };
 		E13628B3C13B89ACF2419860 /* HardeningManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C72E35BD24624AF58CB2D55 /* HardeningManager.swift */; };
@@ -43,6 +44,14 @@
 		AC1000000000000000000800 /* SuspensionActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1000000000000000000100 /* SuspensionActivityAttributes.swift */; };
 		AC1000000000000000000900 /* BrokeActivityBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1000000000000000000300 /* BrokeActivityBundle.swift */; };
 		AC1000000000000000000A00 /* BrokeActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AC1000000000000000000500 /* BrokeActivity.appex */; settings = {ATTRIBUTES = (RemoveHeaderOnCopy, ); }; };
+		BC2000000000000000000200 /* BrokeTestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC2000000000000000000100 /* BrokeTestSupport.swift */; };
+		BC2000000000000000000201 /* ScheduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC2000000000000000000101 /* ScheduleTests.swift */; };
+		BC2000000000000000000202 /* ProfileCodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC2000000000000000000102 /* ProfileCodingTests.swift */; };
+		BC2000000000000000000203 /* ProfileTransferTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC2000000000000000000103 /* ProfileTransferTests.swift */; };
+		BC2000000000000000000204 /* ProfileImportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC2000000000000000000104 /* ProfileImportTests.swift */; };
+		BC2000000000000000000205 /* SharedStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC2000000000000000000105 /* SharedStoreTests.swift */; };
+		BC2000000000000000000206 /* ShieldWriterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC2000000000000000000106 /* ShieldWriterTests.swift */; };
+		BC2000000000000000000207 /* ScheduleSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC2000000000000000000107 /* ScheduleSyncTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -91,6 +100,13 @@
 			remoteGlobalIDString = AC1000000000000000000C00;
 			remoteInfo = BrokeActivity;
 		};
+		BC2000000000000000000011 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F5A3B0532C733E3400BD6C7F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F5A3B05A2C733E3400BD6C7F;
+			remoteInfo = Broke;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXTargetDependency section */
@@ -114,6 +130,11 @@
 			target = AC1000000000000000000C00 /* BrokeActivity */;
 			targetProxy = AC1000000000000000001400 /* PBXContainerItemProxy */;
 		};
+		BC2000000000000000000010 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F5A3B05A2C733E3400BD6C7F /* Broke */;
+			targetProxy = BC2000000000000000000011 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin PBXFileReference section */
@@ -125,6 +146,7 @@
 		F51C38D52C775AAF003B4EB3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F51C38D62C775CAF003B4EB3 /* AppBlocker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlocker.swift; sourceTree = "<group>"; };
 		EA9AE70DBF939EDCEF6F14A4 /* TagSecret.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagSecret.swift; sourceTree = "<group>"; };
+		AC1000000000000000002100 /* ProfileTransfer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileTransfer.swift; sourceTree = "<group>"; };
 		6B135C6CAEB159A89E45B2CB /* ShieldConfigurationExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShieldConfigurationExtension.swift; sourceTree = "<group>"; };
 		0D9303A8C39310F191A6EA13 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F1E1E636D002555635B06A81 /* BrokeShieldConfig.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BrokeShieldConfig.entitlements; sourceTree = "<group>"; };
@@ -156,6 +178,15 @@
 		AC1000000000000000000300 /* BrokeActivityBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrokeActivityBundle.swift; sourceTree = "<group>"; };
 		AC1000000000000000000400 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AC1000000000000000000500 /* BrokeActivity.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BrokeActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BC2000000000000000000001 /* BrokeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BrokeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BC2000000000000000000100 /* BrokeTestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrokeTestSupport.swift; sourceTree = "<group>"; };
+		BC2000000000000000000101 /* ScheduleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleTests.swift; sourceTree = "<group>"; };
+		BC2000000000000000000102 /* ProfileCodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileCodingTests.swift; sourceTree = "<group>"; };
+		BC2000000000000000000103 /* ProfileTransferTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileTransferTests.swift; sourceTree = "<group>"; };
+		BC2000000000000000000104 /* ProfileImportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileImportTests.swift; sourceTree = "<group>"; };
+		BC2000000000000000000105 /* SharedStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedStoreTests.swift; sourceTree = "<group>"; };
+		BC2000000000000000000106 /* ShieldWriterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShieldWriterTests.swift; sourceTree = "<group>"; };
+		BC2000000000000000000107 /* ScheduleSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleSyncTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -196,6 +227,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BC2000000000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -215,6 +253,7 @@
 				8C841F37913B93E15149AA22 /* BrokeShieldConfig */,
 				70B530604C16709CD731007D /* BrokeShieldAction */,
 				AC1000000000000000000B00 /* BrokeActivity */,
+				BC2000000000000000000002 /* BrokeTests */,
 				F5A3B05C2C733E3400BD6C7F /* Products */,
 				F51C38CF2C77594E003B4EB3 /* Frameworks */,
 			);
@@ -228,6 +267,7 @@
 				FFB4FDAA9EDBC55CD7285397 /* BrokeShieldConfig.appex */,
 				A0B5DFC48B8DB40A52D4CA5F /* BrokeShieldAction.appex */,
 				AC1000000000000000000500 /* BrokeActivity.appex */,
+				BC2000000000000000000001 /* BrokeTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -246,6 +286,7 @@
 				EA9AE70DBF939EDCEF6F14A4 /* TagSecret.swift */,
 				4C72E35BD24624AF58CB2D55 /* HardeningManager.swift */,
 				9976FA2DFF294F1EBE649B1F /* Profile.swift */,
+				AC1000000000000000002100 /* ProfileTransfer.swift */,
 				DBE991B90E83B062B0BF63BC /* ShieldWriter.swift */,
 				45D98B3F1210525A22609960 /* ScheduleManager.swift */,
 				1602DAC877F6AA88AEA3E38D /* Schedule.swift */,
@@ -306,6 +347,21 @@
 				AC1000000000000000000400 /* Info.plist */,
 			);
 			path = BrokeActivity;
+			sourceTree = "<group>";
+		};
+		BC2000000000000000000002 /* BrokeTests */ = {
+			isa = PBXGroup;
+			children = (
+				BC2000000000000000000100 /* BrokeTestSupport.swift */,
+				BC2000000000000000000101 /* ScheduleTests.swift */,
+				BC2000000000000000000102 /* ProfileCodingTests.swift */,
+				BC2000000000000000000103 /* ProfileTransferTests.swift */,
+				BC2000000000000000000104 /* ProfileImportTests.swift */,
+				BC2000000000000000000105 /* SharedStoreTests.swift */,
+				BC2000000000000000000106 /* ShieldWriterTests.swift */,
+				BC2000000000000000000107 /* ScheduleSyncTests.swift */,
+			);
+			path = BrokeTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -404,6 +460,24 @@
 			productReference = AC1000000000000000000500 /* BrokeActivity.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		BC2000000000000000000003 /* BrokeTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BC2000000000000000000007 /* Build configuration list for PBXNativeTarget "BrokeTests" */;
+			buildPhases = (
+				BC2000000000000000000004 /* Sources */,
+				BC2000000000000000000005 /* Frameworks */,
+				BC2000000000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BC2000000000000000000010 /* PBXTargetDependency */,
+			);
+			name = BrokeTests;
+			productName = BrokeTests;
+			productReference = BC2000000000000000000001 /* BrokeTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -429,6 +503,10 @@
 					AC1000000000000000000C00 = {
 						CreatedOnToolsVersion = 14.3.1;
 					};
+					BC2000000000000000000003 = {
+						CreatedOnToolsVersion = 14.3.1;
+						TestTargetID = F5A3B05A2C733E3400BD6C7F;
+					};
 				};
 			};
 			buildConfigurationList = F5A3B0562C733E3400BD6C7F /* Build configuration list for PBXProject "Broke" */;
@@ -452,6 +530,7 @@
 				31067064D12D81A27CDB5AA2 /* BrokeShieldConfig */,
 				A26B3D04DCC53495E89BD17F /* BrokeShieldAction */,
 				AC1000000000000000000C00 /* BrokeActivity */,
+				BC2000000000000000000003 /* BrokeTests */,
 			);
 		};
 /* End PBXProject section */
@@ -494,6 +573,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BC2000000000000000000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -513,6 +599,7 @@
 				6CBBA8E18197DB2C67DBBDA0 /* TagSecret.swift in Sources */,
 				E13628B3C13B89ACF2419860 /* HardeningManager.swift in Sources */,
 				ED5D0EBC764E5CF760E39BC0 /* Profile.swift in Sources */,
+				AC1000000000000000002200 /* ProfileTransfer.swift in Sources */,
 				295ECB6EC29FA2D4B65A286E /* ShieldWriter.swift in Sources */,
 				304A17070A350894626CE9E7 /* ScheduleManager.swift in Sources */,
 				55E9BBA9FCC6B412D59D03AF /* Schedule.swift in Sources */,
@@ -557,6 +644,21 @@
 			files = (
 				AC1000000000000000000900 /* BrokeActivityBundle.swift in Sources */,
 				AC1000000000000000000800 /* SuspensionActivityAttributes.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BC2000000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BC2000000000000000000200 /* BrokeTestSupport.swift in Sources */,
+				BC2000000000000000000201 /* ScheduleTests.swift in Sources */,
+				BC2000000000000000000202 /* ProfileCodingTests.swift in Sources */,
+				BC2000000000000000000203 /* ProfileTransferTests.swift in Sources */,
+				BC2000000000000000000204 /* ProfileImportTests.swift in Sources */,
+				BC2000000000000000000205 /* SharedStoreTests.swift in Sources */,
+				BC2000000000000000000206 /* ShieldWriterTests.swift in Sources */,
+				BC2000000000000000000207 /* ScheduleSyncTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -993,6 +1095,48 @@
 			};
 			name = Release;
 		};
+		BC2000000000000000000008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CH4P23R94R;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Brokeest.ios.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Broke.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Broke";
+			};
+			name = Debug;
+		};
+		BC2000000000000000000009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = CH4P23R94R;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Brokeest.ios.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Broke.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Broke";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1046,6 +1190,15 @@
 			buildConfigurations = (
 				AC1000000000000000001100 /* Debug */,
 				AC1000000000000000001200 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BC2000000000000000000007 /* Build configuration list for PBXNativeTarget "BrokeTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BC2000000000000000000008 /* Debug */,
+				BC2000000000000000000009 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

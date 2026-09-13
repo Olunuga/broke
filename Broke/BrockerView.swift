@@ -20,6 +20,9 @@ struct BrokerView: View {
     @State private var showCreateTagAlert = false
     @State private var showWriteResultAlert = false
     @State private var showDiagnostics = false
+    #if DEBUG
+    @State private var showProfileTransfer = false
+    #endif
     @State private var showBlockingExplanation = false
     @State private var nfcWriteSuccess = false
     @State private var activeSchedules: [Schedule]
@@ -123,6 +126,11 @@ struct BrokerView: View {
             .sheet(isPresented: $showDiagnostics) {
                 DiagnosticsView(profiles: profileManager.profiles) { showDiagnostics = false }
             }
+            #if DEBUG
+            .sheet(isPresented: $showProfileTransfer) {
+                ProfileTransferDebugView(profileManager: profileManager) { showProfileTransfer = false }
+            }
+            #endif
             .alert("Tag Creation", isPresented: $showWriteResultAlert) {
                 Button("OK", role: .cancel) { }
             } message: {
@@ -403,6 +411,9 @@ struct BrokerView: View {
             }
             Button(action: startTestSuspension) {
                 Image(systemName: "timer")
+            }
+            Button(action: { showProfileTransfer = true }) {
+                Image(systemName: "square.and.arrow.up.on.square")
             }
             #endif
             resumeBlockingControl

@@ -348,6 +348,20 @@ made during the 30 minutes doesn't cancel the automatic re-block.
   `SharedStore.isAnythingBlocking` every 5 seconds and on appear, dismissing itself
   rather than relying on the sheet being torn down implicitly when `ProfilesPicker`
   leaves the view tree.
+- [x] Three injection points exist for tests, and nothing in the app writes to any of them.
+
+  `SharedStore.defaults` is a `var` so a test can point it at a scratch `UserDefaults`
+  suite instead of the App Group. `ScheduleManager.center` and
+  `ScheduleManager.shieldTarget` are `var`s so a test can observe which activities `sync`
+  registers and which store it shields or clears. All three are internal to the app
+  module, so only `@testable import Broke` reaches them, and each has a production
+  default that the app never replaces.
+- [x] Profile import is gated the same way profile creation is.
+
+  `ProfilesPicker`'s import button starts a scan instead of the file picker while
+  editing is locked, and `handleImport` re-checks the grant before writing anything —
+  the file picker takes long enough that a block can start while it is open. Export is
+  ungated: it reads profiles and changes nothing that is enforced.
 - [x] The "+" create-tag button is gated on `!TagSecret.isRegistered || !isBlocked`,
 
   not on `isBlocked` alone. A schedule starts without a tag scan, so gating on
@@ -392,4 +406,8 @@ second. A 30-minute budget can overrun slightly.
 - `DeviceActivityCenter` rejects intervals under 15 minutes with `intervalTooShort`.
 - A window that crosses midnight must be split into two schedules.
 - Extension callbacks do not fire in the simulator.
+- `ApplicationToken`, `ActivityCategoryToken`, and `WebDomainToken` are opaque values
+the system issues per install. An exported profile carries them, but they only resolve
+on the install that wrote the file, so an import elsewhere keeps the name, icon, and
+schedules and drops the selections.
 
