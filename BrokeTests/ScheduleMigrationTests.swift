@@ -40,11 +40,37 @@ final class ScheduleMigrationTests: BrokeTestCase {
         XCTAssertFalse(schedule.wantsBlock(referenceDate: Fixture.date(2026, 9, 14, 16, 0), calendar: Fixture.calendar))
     }
 
-    func testAMigratedScheduleGetsAWindowIdForItsActivity() throws {
-        let schedule = try JSONDecoder().decode(Schedule.self, from: Data(inlineWindowJSON.utf8))
+    /// The app registers an activity by window id and the extension looks the window up
+    /// by that id in a separate process, so an id that changed per decode would match nothing.
+    func testAMigratedWindowKeepsTheSameIdOnEveryDecode() throws {
+        let first = try JSONDecoder().decode(Schedule.self, from: Data(inlineWindowJSON.utf8))
+        let second = try JSONDecoder().decode(Schedule.self, from: Data(inlineWindowJSON.utf8))
 
-        XCTAssertEqual(schedule.windows[0].activityName.rawValue, schedule.windows[0].id.uuidString)
-        XCTAssertNotEqual(schedule.windows[0].id, schedule.id)
+        XCTAssertEqual(first.windows[0].id, second.windows[0].id)
+        XCTAssertEqual(first.windows[0].id, first.id)
+        XCTAssertEqual(first.windows[0].activityName.rawValue, first.id.uuidString)
+    }
+
+    func testAMigratedScheduleResolvesThroughTheWindowLookup() throws {
+        let schedule = try JSONDecoder().decode(Schedule.self, from: Data(inlineWindowJSON.utf8))
+        SharedStore.saveProfiles([Fixture.profile(schedules: [schedule])])
+
+        // Reload rather than reuse the decoded value: this is the path the extension takes.
+        let reloaded = SharedStore.loadProfiles()[0].schedules[0]
+        let found = try XCTUnwrap(SharedStore.window(withId: reloaded.windows[0].id))
+
+        XCTAssertEqual(found.schedule.id, schedule.id)
+    }
+
+    func testAnInlineWindowSurvivesBeingSavedAndReloaded() throws {
+        let schedule = try JSONDecoder().decode(Schedule.self, from: Data(inlineWindowJSON.utf8))
+        SharedStore.saveProfiles([Fixture.profile(schedules: [schedule])])
+
+        let firstLoad = SharedStore.loadProfiles()[0].schedules[0]
+        let secondLoad = SharedStore.loadProfiles()[0].schedules[0]
+
+        XCTAssertEqual(firstLoad.windows[0].id, secondLoad.windows[0].id)
+        XCTAssertEqual(firstLoad.windows[0].startMinutes, 9 * 60 + 30)
     }
 
     func testAProfileStoredWithInlineWindowSchedulesDecodes() throws {

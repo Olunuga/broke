@@ -114,8 +114,12 @@ struct Schedule: Codable, Identifiable, Equatable {
             self.windows = windows
         } else {
             let inline = try decoder.container(keyedBy: InlineWindowKeys.self)
+            // The schedule's own id, not a fresh one: nothing rewrites the record, so a
+            // random id here would differ on every decode and the activity the app
+            // registers would never match the window the extension looks up.
             windows = [
                 ScheduleWindow(
+                    id: id,
                     startTime: try inline.decode(DateComponents.self, forKey: .startTime),
                     endTime: try inline.decode(DateComponents.self, forKey: .endTime)
                 )
