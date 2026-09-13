@@ -27,6 +27,26 @@ Run on a device from Xcode (⌘R uses the Debug configuration). Two behaviors do
 
 Bundle ID `com.Brokeest.ios`, App Group `group.com.Brokeest.ios`, deployment target iOS 16.4.
 
+## Every change carries tests
+
+New behavior, and every bug fix, ships with tests in `BrokeTests` in the same change. The
+test suite passing is part of the change being done, alongside the Debug and Release builds.
+
+Test the decision, not the view. A feature's logic belongs somewhere a test can reach it:
+`Schedule`, `SharedStore`, `ProfileManager`, `ShieldWriter`, `ScheduleManager`, or a type
+like `ProfileTransfer`. A SwiftUI view holds the presentation and the user's intent, and
+nothing else. If a rule can only be reached by tapping, move the rule.
+
+Three injection points exist for this, each with a production default the app never
+replaces: `SharedStore.defaults`, `ScheduleManager.center`, and
+`ScheduleManager.shieldTarget`. Reach for one of them before you decide something is
+untestable. Extend `Fixture` in `BrokeTestSupport.swift` rather than building profiles and
+schedules inline.
+
+Two things genuinely cannot be tested here, and only these two: anything needing a real
+`ApplicationToken`, and anything needing NFC, the Keychain, or a `DeviceActivityMonitor`
+callback. Say so in the change rather than leaving the gap silent.
+
 ## Targets and shared files
 
 Four targets: the app `Broke`, the `BrokeMonitor` monitor extension, and the `BrokeShieldConfig` / `BrokeShieldAction` shield extensions.
