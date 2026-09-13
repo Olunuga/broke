@@ -93,11 +93,21 @@ enum SharedStore {
         return nil
     }
 
-    /// Same lookup, for a schedule's `outsideWindowActivityName` instead of its main
-    /// one — that name carries an `"-outside"` suffix `UUID(uuidString:)` can't parse
-    /// directly, so the suffix is stripped first.
-    static func schedule(forOutsideWindowActivity activity: DeviceActivityName) -> (profile: Profile, schedule: Schedule)? {
-        let suffix = "-outside"
+    /// Finds the window an activity is named for, along with its schedule and profile.
+    static func window(withId windowId: UUID) -> (profile: Profile, schedule: Schedule, window: ScheduleWindow)? {
+        for profile in loadProfiles() {
+            for schedule in profile.schedules {
+                if let window = schedule.windows.first(where: { $0.id == windowId }) {
+                    return (profile, schedule, window)
+                }
+            }
+        }
+        return nil
+    }
+
+    /// Same lookup for a schedule's `budgetActivityName`, whose `"-budget"` suffix `UUID(uuidString:)` cannot parse.
+    static func schedule(forBudgetActivity activity: DeviceActivityName) -> (profile: Profile, schedule: Schedule)? {
+        let suffix = "-budget"
         guard activity.rawValue.hasSuffix(suffix) else { return nil }
         let idString = String(activity.rawValue.dropLast(suffix.count))
         guard let id = UUID(uuidString: idString) else { return nil }
@@ -173,28 +183,27 @@ enum SharedStore {
         return schedules
     }
 
-    // MARK: - Outside-window budget (`.block` mode)
+    // MARK: - Daily limit
 
-    /// Whether a `.block` schedule's outside-window budget has already been spent
-    /// today. Stored as the date it was set rather than a bare flag, and checked
-    /// against "is that date today" — self-expiring, rather than depending on the
-    /// tracking activity's midnight `intervalDidStart` firing reliably to clear it.
-    /// A missed background callback here would otherwise leave a schedule stuck
-    /// showing as blocking indefinitely.
-    static func isOutsideWindowBudgetExceeded(for scheduleId: UUID) -> Bool {
-        guard let date = defaults.object(forKey: "outsideWindowBudgetExceededDate-\(scheduleId.uuidString)") as? Date else {
+    /// Whether a schedule's daily limit is already spent today. Stored as the date it was set and checked against "is that date today", so it expires on its own rather than depending on a midnight callback firing.
+    static func isBudgetSpent(for scheduleId: UUID) -> Bool {
+        guard let date = defaults.object(forKey: budgetSpentKey(scheduleId)) as? Date else {
             return false
         }
         return Calendar.current.isDateInToday(date)
     }
 
-    static func setOutsideWindowBudgetExceeded(_ exceeded: Bool, for scheduleId: UUID) {
-        let key = "outsideWindowBudgetExceededDate-\(scheduleId.uuidString)"
-        if exceeded {
+    static func setBudgetSpent(_ spent: Bool, for scheduleId: UUID) {
+        let key = budgetSpentKey(scheduleId)
+        if spent {
             defaults.set(Date(), forKey: key)
         } else {
             defaults.removeObject(forKey: key)
         }
+    }
+
+    private static func budgetSpentKey(_ scheduleId: UUID) -> String {
+        "budgetSpentDate-\(scheduleId.uuidString)"
     }
 
     static func isAnyScheduleBlocking() -> Bool {

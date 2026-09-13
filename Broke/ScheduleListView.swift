@@ -75,9 +75,11 @@ private struct ScheduleRow: View {
     private var timeLabel: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
-        let start = Calendar.current.date(from: schedule.startTime) ?? Date()
-        let end = Calendar.current.date(from: schedule.endTime) ?? Date()
-        return "\(formatter.string(from: start)) – \(formatter.string(from: end))"
+        return schedule.sortedWindows.map { window in
+            let start = Calendar.current.date(from: window.startTime) ?? Date()
+            let end = Calendar.current.date(from: window.endTime) ?? Date()
+            return "\(formatter.string(from: start)) – \(formatter.string(from: end))"
+        }.joined(separator: ", ")
     }
 
     var body: some View {

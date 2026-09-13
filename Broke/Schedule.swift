@@ -23,25 +23,54 @@ enum ScheduleMode: String, Codable, CaseIterable, Identifiable {
     var explanation: String {
         switch self {
         case .block:
-            return "This profile is blocked during the window below."
+            return "This profile is blocked during the windows below."
         case .allow:
-            return "This profile is usable only inside the window below, on the days you pick. It stays blocked at every other time, including whole days you do not pick."
+            return "This profile is usable only inside the windows below, on the days you pick. It stays blocked at every other time, including whole days you do not pick."
         }
     }
 }
 
-/// A recurring window in which a profile is blocked or allowed.
-///
-/// `weekdays` follows `Calendar`'s convention: 1 = Sunday ... 7 = Saturday.
-/// `startTime`/`endTime` carry only `hour` and `minute`; a window may not cross
-/// midnight, so `endTime` must be later than `startTime` on the same day.
+/// One span of a day. A window may not cross midnight; an overnight span is two windows in the same schedule.
+struct ScheduleWindow: Codable, Identifiable, Equatable {
+    let id: UUID
+    var startTime: DateComponents
+    var endTime: DateComponents
+
+    init(id: UUID = UUID(), startTime: DateComponents, endTime: DateComponents) {
+        self.id = id
+        self.startTime = startTime
+        self.endTime = endTime
+    }
+
+    var startMinutes: Int { (startTime.hour ?? 0) * 60 + (startTime.minute ?? 0) }
+
+    var endMinutes: Int { (endTime.hour ?? 0) * 60 + (endTime.minute ?? 0) }
+
+    var durationMinutes: Int { endMinutes - startMinutes }
+
+    var isValid: Bool { durationMinutes >= Schedule.minimumDurationMinutes }
+
+    func overlaps(_ other: ScheduleWindow) -> Bool {
+        startMinutes < other.endMinutes && other.startMinutes < endMinutes
+    }
+
+    func contains(minuteOfDay minute: Int) -> Bool {
+        minute >= startMinutes && minute < endMinutes
+    }
+
+    /// Its own activity, since one `DeviceActivitySchedule` interval cannot express several disjoint spans.
+    var activityName: DeviceActivityName {
+        DeviceActivityName(id.uuidString)
+    }
+}
+
+/// Recurring windows in which a profile is blocked or allowed. `weekdays` follows `Calendar`: 1 = Sunday ... 7 = Saturday, and means the day a window starts on.
 struct Schedule: Codable, Identifiable, Equatable {
     let id: UUID
     var name: String
     var mode: ScheduleMode
     var weekdays: Set<Int>
-    var startTime: DateComponents
-    var endTime: DateComponents
+    var windows: [ScheduleWindow]
     var budgetMinutes: Int?
     var isEnabled: Bool
 
@@ -50,8 +79,7 @@ struct Schedule: Codable, Identifiable, Equatable {
         name: String,
         mode: ScheduleMode,
         weekdays: Set<Int>,
-        startTime: DateComponents,
-        endTime: DateComponents,
+        windows: [ScheduleWindow],
         budgetMinutes: Int? = nil,
         isEnabled: Bool = true
     ) {
@@ -59,58 +87,77 @@ struct Schedule: Codable, Identifiable, Equatable {
         self.name = name
         self.mode = mode
         self.weekdays = weekdays
-        self.startTime = startTime
-        self.endTime = endTime
+        self.windows = windows
         self.budgetMinutes = budgetMinutes
         self.isEnabled = isEnabled
     }
 
+    private enum CodingKeys: String, CodingKey {
+        case id, name, mode, weekdays, windows, budgetMinutes, isEnabled
+    }
+
+    private enum InlineWindowKeys: String, CodingKey {
+        case startTime, endTime
+    }
+
+    // Schedules saved when a schedule held one window inline carry startTime/endTime instead of a list.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        mode = try container.decode(ScheduleMode.self, forKey: .mode)
+        weekdays = try container.decode(Set<Int>.self, forKey: .weekdays)
+        budgetMinutes = try container.decodeIfPresent(Int.self, forKey: .budgetMinutes)
+        isEnabled = try container.decode(Bool.self, forKey: .isEnabled)
+
+        if let windows = try container.decodeIfPresent([ScheduleWindow].self, forKey: .windows) {
+            self.windows = windows
+        } else {
+            let inline = try decoder.container(keyedBy: InlineWindowKeys.self)
+            windows = [
+                ScheduleWindow(
+                    startTime: try inline.decode(DateComponents.self, forKey: .startTime),
+                    endTime: try inline.decode(DateComponents.self, forKey: .endTime)
+                )
+            ]
+        }
+    }
+
+    /// Total time the windows cover in a day.
     var durationMinutes: Int {
-        let start = (startTime.hour ?? 0) * 60 + (startTime.minute ?? 0)
-        let end = (endTime.hour ?? 0) * 60 + (endTime.minute ?? 0)
-        return end - start
+        windows.reduce(0) { $0 + $1.durationMinutes }
     }
 
     /// The shortest window DeviceActivityCenter accepts.
     static let minimumDurationMinutes = 15
 
     var isValid: Bool {
-        !weekdays.isEmpty && durationMinutes >= Schedule.minimumDurationMinutes
+        !weekdays.isEmpty && !windows.isEmpty && windows.allSatisfy(\.isValid) && !hasOverlappingWindows
+    }
+
+    var hasOverlappingWindows: Bool {
+        let sorted = sortedWindows
+        return zip(sorted, sorted.dropFirst()).contains { $0.overlaps($1) }
+    }
+
+    var sortedWindows: [ScheduleWindow] {
+        windows.sorted { $0.startMinutes < $1.startMinutes }
     }
 
     // MARK: - Activity and store identity
 
-    /// Each schedule owns its own `DeviceActivityName` and `ManagedSettingsStore`,
-    /// keyed by id. A separate named store per schedule means a schedule's shield
-    /// composes with every other store (the manual toggle's, other schedules') rather
-    /// than overwriting them — `ManagedSettingsStore` settings from different stores
-    /// are combined by the system, not last-write-wins.
-    var activityName: DeviceActivityName {
-        DeviceActivityName(id.uuidString)
-    }
-
-    /// Only meaningful for `.allow` — the daily-usage budget event attached to this
-    /// schedule's own activity, since the budget and the window cover the same span.
-    var budgetEventName: DeviceActivityEvent.Name {
-        DeviceActivityEvent.Name(id.uuidString)
-    }
-
-    /// Only meaningful for `.block` — a second, all-day activity that tracks usage
-    /// outside the blocked window. The window's own activity only covers the window
-    /// itself, and `DeviceActivitySchedule` can't express two disjoint spans (before
-    /// and after the window) as one interval. An all-day tracker works without
-    /// splitting the budget: during the window the profile is already shielded, so no
-    /// usage accrues there, leaving the count an accurate measure of outside-window use.
-    var outsideWindowActivityName: DeviceActivityName {
-        DeviceActivityName("\(id.uuidString)-outside")
-    }
-
-    var outsideWindowEventName: DeviceActivityEvent.Name {
-        DeviceActivityEvent.Name("\(id.uuidString)-outside")
-    }
-
+    /// One store per schedule, so its shield composes with every other store rather than overwriting it: the system combines settings from separate stores.
     var storeName: ManagedSettingsStore.Name {
         ManagedSettingsStore.Name(id.uuidString)
+    }
+
+    /// One all-day activity carries the daily limit in both modes: usage only accrues while the profile is unshielded, which is the span each mode's limit caps.
+    var budgetActivityName: DeviceActivityName {
+        DeviceActivityName("\(id.uuidString)-budget")
+    }
+
+    var budgetEventName: DeviceActivityEvent.Name {
+        DeviceActivityEvent.Name("\(id.uuidString)-budget")
     }
 
     // MARK: - Scheduling logic (shared by ScheduleManager and the monitor extension)
@@ -122,48 +169,36 @@ struct Schedule: Codable, Identifiable, Equatable {
     func isWithinWindow(referenceDate: Date = Date(), calendar: Calendar = .current) -> Bool {
         let now = calendar.dateComponents([.hour, .minute], from: referenceDate)
         let nowMinutes = (now.hour ?? 0) * 60 + (now.minute ?? 0)
-        let startMinutes = (startTime.hour ?? 0) * 60 + (startTime.minute ?? 0)
-        let endMinutes = (endTime.hour ?? 0) * 60 + (endTime.minute ?? 0)
-        return nowMinutes >= startMinutes && nowMinutes < endMinutes
+        return windows.contains { $0.contains(minuteOfDay: nowMinutes) }
     }
 
-    /// Whether this schedule's window is open right now: today is a scheduled day,
-    /// and the current time falls inside the start/end window.
+    /// Whether a window is open right now: today is a scheduled day, and now falls inside one of the windows.
     func isUsable(referenceDate: Date = Date(), calendar: Calendar = .current) -> Bool {
         isActiveToday(referenceDate: referenceDate, calendar: calendar)
             && isWithinWindow(referenceDate: referenceDate, calendar: calendar)
     }
 
-    /// Whether this schedule wants its profile blocked right now, independent of
-    /// `isEnabled` and any NFC suspension — callers layer those in separately.
-    /// `.block` blocks exactly during the window; `.allow` blocks everywhere else.
+    /// Blocked right now, ignoring `isEnabled`, the daily limit, and any suspension: `.block` blocks during the windows, `.allow` blocks everywhere else.
     func wantsBlock(referenceDate: Date = Date(), calendar: Calendar = .current) -> Bool {
         let usable = isUsable(referenceDate: referenceDate, calendar: calendar)
         return mode == .block ? usable : !usable
     }
 
-    /// `wantsBlock()`, plus: for `.block` mode, staying blocked for the rest of today
-    /// if the outside-window budget was already spent, even after the window itself
-    /// has ended — otherwise the window closing would unconditionally clear a block
-    /// the budget is still supposed to be enforcing.
+    /// `wantsBlock()`, plus staying blocked for the rest of today once the limit is spent, which a window boundary would otherwise clear.
     func effectiveWantsBlock(referenceDate: Date = Date(), calendar: Calendar = .current) -> Bool {
         if wantsBlock(referenceDate: referenceDate, calendar: calendar) { return true }
-        guard mode == .block, isActiveToday(referenceDate: referenceDate, calendar: calendar) else { return false }
-        return SharedStore.isOutsideWindowBudgetExceeded(for: id)
+        guard isActiveToday(referenceDate: referenceDate, calendar: calendar) else { return false }
+        return SharedStore.isBudgetSpent(for: id)
     }
 
-    /// The next moment this schedule's window opens or closes, respecting
-    /// `weekdays` — display only. Pure window math, the same as `wantsBlock()`; it
-    /// doesn't account for the outside-window budget or a suspension, since neither
-    /// is knowable this precisely from the app (see `SharedStore
-    /// .isOutsideWindowBudgetExceeded`'s doc comment on why actual usage isn't).
+    /// The next moment a window opens or closes, respecting `weekdays`. Display only: pure window math, with no account of the daily limit or a suspension.
     func nextTransition(referenceDate: Date = Date(), calendar: Calendar = .current) -> Date? {
         var earliest: Date?
         for dayOffset in 0...7 {
             guard let day = calendar.date(byAdding: .day, value: dayOffset, to: referenceDate) else { continue }
             guard weekdays.contains(calendar.component(.weekday, from: day)) else { continue }
 
-            for time in [startTime, endTime] {
+            for time in windows.flatMap({ [$0.startTime, $0.endTime] }) {
                 guard let candidate = calendar.date(
                     bySettingHour: time.hour ?? 0, minute: time.minute ?? 0, second: 0, of: day
                 ), candidate > referenceDate else { continue }
@@ -180,16 +215,18 @@ extension Schedule {
     /// Every input `effectiveWantsBlock()` reads, in one line, so a shield that is on
     /// can be traced to the value that put it there.
     func decisionSummary(referenceDate: Date = Date(), calendar: Calendar = .current) -> String {
-        let window = String(
-            format: "%02d:%02d-%02d:%02d",
-            startTime.hour ?? 0, startTime.minute ?? 0, endTime.hour ?? 0, endTime.minute ?? 0
-        )
+        let windowList = sortedWindows.map {
+            String(
+                format: "%02d:%02d-%02d:%02d",
+                $0.startTime.hour ?? 0, $0.startTime.minute ?? 0, $0.endTime.hour ?? 0, $0.endTime.minute ?? 0
+            )
+        }.joined(separator: ",")
         return "schedule '\(name)' [\(id.uuidString.prefix(8))] mode=\(mode.rawValue)"
-            + " enabled=\(isEnabled) valid=\(isValid) weekdays=\(weekdays.sorted()) window=\(window)"
+            + " enabled=\(isEnabled) valid=\(isValid) weekdays=\(weekdays.sorted()) windows=\(windowList)"
             + " today=\(isActiveToday(referenceDate: referenceDate, calendar: calendar))"
             + " inWindow=\(isWithinWindow(referenceDate: referenceDate, calendar: calendar))"
             + " budgetMinutes=\(budgetMinutes.map(String.init) ?? "none")"
-            + " budgetSpent=\(SharedStore.isOutsideWindowBudgetExceeded(for: id))"
+            + " budgetSpent=\(SharedStore.isBudgetSpent(for: id))"
             + " wantsBlock=\(wantsBlock(referenceDate: referenceDate, calendar: calendar))"
             + " effectiveWantsBlock=\(effectiveWantsBlock(referenceDate: referenceDate, calendar: calendar))"
     }

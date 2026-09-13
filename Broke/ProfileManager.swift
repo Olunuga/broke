@@ -162,15 +162,14 @@ class ProfileManager: ObservableObject {
 
         for item in transfer.profiles {
             let name = uniqueProfileName(from: item.name)
-            // A schedule's id names its ManagedSettingsStore and DeviceActivityName, so a reused one would collide.
+            // A schedule's id names its ManagedSettingsStore and a window's id names its DeviceActivityName, so a reused one would collide.
             let schedules = item.schedules.map { schedule in
                 Schedule(
                     id: UUID(),
                     name: schedule.name,
                     mode: schedule.mode,
                     weekdays: schedule.weekdays,
-                    startTime: schedule.startTime,
-                    endTime: schedule.endTime,
+                    windows: schedule.windows.map { ScheduleWindow(startTime: $0.startTime, endTime: $0.endTime) },
                     budgetMinutes: schedule.budgetMinutes,
                     isEnabled: keepSelections && schedule.isEnabled
                 )

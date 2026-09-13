@@ -10,21 +10,18 @@ Bundle ID `com.Brokeest.ios`, team `CH4P23R94R`, App Group `group.com.Brokeest.i
 A `DeviceActivityMonitor` app extension applies and removes the shield while the
 main app is not running. The app alone cannot do this.
 
-- **One `DeviceActivityName` per schedule**, with a daily repeating interval. The
-extension filters by weekday inside `intervalDidStart`. Activity count equals the
-number of schedules, which stays well below the `excessiveActivities` limit.
-- **A budget means something different per mode.** For `.allow`, it caps usage inside
-the usable window — a `DeviceActivityEvent` on the schedule's own activity, with
-`threshold: DateComponents(minute: n)`, works directly since the event only needs to
-track usage during that same interval. For `.block`, it caps usage outside the blocked
-window instead — the block activity's own interval covers the wrong span for that, so
-it uses a second, all-day activity per schedule; see phase 5 for why that works without
-splitting the budget across two disjoint spans, and how closing the window avoids
-wrongly clearing a budget-triggered block.
-- **Activity count roughly doubles for a `.block` schedule with a budget set**, since it
-
-registers both the window's own activity and the all-day outside-window tracker —
-still well below the `excessiveActivities` limit for a handful of schedules.
+- **One `DeviceActivityName` per window**, named by the window's id, with a daily
+repeating interval. `DeviceActivitySchedule` cannot express several disjoint spans as
+one interval, so a schedule with two windows registers two activities. The extension
+filters by weekday inside `intervalDidStart`.
+- **One all-day budget activity per schedule with a daily limit**, named
+`"<scheduleId>-budget"`, in both modes. Usage only accrues while the profile is
+unshielded, which is exactly the span each mode's limit caps: under `.block` the time
+outside every window, under `.allow` the time inside them. All-day rather than
+per-window, so one limit covers the whole day however many windows there are, and
+`weekdays` is checked when the threshold fires rather than by the interval.
+- **Activity count is windows plus one per schedule with a limit** — well below the
+`excessiveActivities` limit for a handful of schedules.
 - **An App Group carries state** between app and extension: profiles, active profile
 ID, and the suspension date.
 - **Each schedule owns its own named `ManagedSettingsStore`**, keyed by the
@@ -46,29 +43,48 @@ immediately on save rather than waiting for the next boundary.
 ```swift
 enum ScheduleMode: String, Codable { case block, allow }
 
+struct ScheduleWindow: Codable, Identifiable {
+    let id: UUID
+    var startTime: DateComponents   // hour, minute
+    var endTime: DateComponents
+}
+
 struct Schedule: Codable, Identifiable {
     let id: UUID
     var name: String
     var mode: ScheduleMode
     var weekdays: Set<Int>          // Calendar convention: 1 = Sunday
-    var startTime: DateComponents   // hour, minute
-    var endTime: DateComponents
-    var budgetMinutes: Int?         // nil = no budget
+    var windows: [ScheduleWindow]
+    var budgetMinutes: Int?         // nil = no limit
     var isEnabled: Bool
 }
 ```
 
+A window may not cross midnight, and `weekdays` means the day a window starts on. An
+overnight span is two windows, 22:00-23:59 and 00:00-06:00, in the same schedule.
+Windows may not overlap each other, and each must be at least
+`minimumDurationMinutes` long.
+
 `Profile` gains `schedules: [Schedule]` and `webDomainTokens: Set<WebDomainToken>`.
-Both need a custom `init(from:)` so profiles saved by earlier versions still decode.
+`Profile` and `Schedule` both need a custom `init(from:)` so records saved by earlier
+versions still decode; a schedule stored with `startTime`/`endTime` and no `windows`
+decodes to a single window.
 
 Example: usable Wednesday to Saturday, 30 minutes maximum. One schedule, mode
-`.allow`, weekdays `{4,5,6,7}`, window 00:00-23:59, budget 30.
+`.allow`, weekdays `{4,5,6,7}`, one window 00:00-23:59, limit 30.
+
+Example: an early-morning and an evening block. One schedule, mode `.block`, windows
+06:00-08:00 and 20:00-22:00.
 
 ### Mode behaviour
 
 A schedule is "usable" at a given moment when today is one of its `weekdays` and the
-current time falls inside `startTime`–`endTime`. `.block` blocks exactly while usable;
+current time falls inside any of its windows. `.block` blocks exactly while usable;
 `.allow` blocks everywhere else, including days not in `weekdays`.
+
+Windows belong to one schedule rather than to separate schedules because shields
+compose by union: two `.allow` schedules would each block the other's window, leaving
+the profile blocked all day, and two schedules carry two independent daily limits.
 
 | Mode     | Blocked when |
 | -------- | ------------ |
@@ -168,42 +184,39 @@ Window transitions work at the end of this phase.
 - [x] Form copy is mode-aware: `.allow` reads "Limit use inside window"; `.block` reads
 
   "Limit use outside window".
-- [x] For `.allow`: `ScheduleManager.startMonitoring` attaches a `DeviceActivityEvent`
+- [x] `Schedule.budgetActivityName`/`budgetEventName` are one all-day
 
-  to the schedule's own activity when `budgetMinutes` is set — the window and the
-  tracked usage cover the same span, so one event suffices. Uses
-  `includesPastActivity: true` on iOS 17.4+ so the budget survives a schedule edit
-  mid-window (`stopMonitoring`/re-register); falls back to the base initializer below
-  that OS version, where a mid-window edit does reset the count.
-- [x] For `.block`: `Schedule.outsideWindowActivityName`/`outsideWindowEventName` are a
-
-  second, all-day (`00:00`–`23:59`, repeating) activity per schedule, registered
-  alongside the window's own — `DeviceActivitySchedule` can't express two disjoint
-  spans (before and after the window) as one interval, so splitting the budget across
-  two activities was the alternative, and it can't share one threshold across them.
-  The all-day tracker works without splitting: the profile is already shielded during
-  the window, so no usage accrues there, leaving the count an accurate measure of
-  outside-window use alone. Registers daily regardless of `weekdays`, same
-  no-weekday-parameter constraint as everywhere else — the extension checks
+  (`00:00`-`23:59`, repeating) activity per schedule, registered by
+  `ScheduleManager.startBudgetMonitoring` whenever `budgetMinutes` is set, in both
+  modes. A window's own interval covers the wrong span for a limit, and a schedule may
+  hold several windows, so a per-window event would either split one limit across them
+  or hand out the limit once per window. The all-day tracker needs neither: the profile
+  is shielded outside the usable spans, so no usage accrues there, leaving the count an
+  accurate measure of exactly what each mode caps. Uses `includesPastActivity: true` on
+  iOS 17.4+ so the count survives a schedule edit (`stopMonitoring`/re-register); below
+  that OS version an edit resets it. Registers daily regardless of `weekdays`, the same
+  no-weekday-parameter constraint as everywhere else, so the extension checks
   `isActiveToday()` before treating a threshold hit as real.
-- [x] Closing the window doesn't wrongly clear a budget-triggered block:
+- [x] A window boundary doesn't wrongly clear a limit-triggered block:
 
-  `Schedule.effectiveWantsBlock()` adds "was the outside-window budget already
-  exceeded today" on top of `wantsBlock()`, backed by
-  `SharedStore.isOutsideWindowBudgetExceeded(for:)` — a flag `eventDidReachThreshold`
-  sets, and the tracking activity's own midnight `intervalDidStart` clears, matching
-  when its threshold counter itself resets. `ScheduleManager.sync`'s resting-state
-  loop and the extension's `apply()` both switched from `wantsBlock()` to
-  `effectiveWantsBlock()`, so app-side and extension-side agree.
-- [x] `eventDidReachThreshold` applies the schedule's shield once a budget event fires
+  `Schedule.effectiveWantsBlock()` adds "was the limit already spent today" on top of
+  `wantsBlock()`, backed by `SharedStore.isBudgetSpent(for:)` — a date-stamped flag
+  `eventDidReachThreshold` sets, and which expires on its own at midnight rather than
+  depending on a callback to clear it. `ScheduleManager.sync`'s resting-state loop and
+  the extension's `apply()` both use `effectiveWantsBlock()`, so app-side and
+  extension-side agree.
+- [x] `eventDidReachThreshold` sets the flag and applies the schedule's shield, for both
 
-  — the window's own event clears at its next `intervalDidStart` (a new day resets
-  the threshold too); the outside-window event clears the same way via the flag above.
+  modes, behind the `isActiveToday()` guard.
 - [ ] **you** Test the Wednesday-to-Saturday, 30-minute `.allow` case
-- [ ] **you** Test a `.block` schedule with an outside-window budget: use up the budget
+- [ ] **you** Test a `.block` schedule with a daily limit: use up the limit before the
 
-  before the window opens, confirm it blocks through the window and stays blocked
-  after the window closes, then confirm it clears at the next day's window start.
+  window opens, confirm it blocks through the window and stays blocked after the window
+  closes, then confirm it clears the next day.
+- [ ] **you** Test a `.allow` schedule with a morning and an evening window: confirm the
+
+  profile is usable in both and blocked between them, then spend the limit in the
+  morning window and confirm the evening window stays blocked until the next day.
 
 ### Phase 6 — NFC early unblock
 
@@ -348,6 +361,14 @@ made during the 30 minutes doesn't cancel the automatic re-block.
   `SharedStore.isAnythingBlocking` every 5 seconds and on appear, dismissing itself
   rather than relying on the sheet being torn down implicitly when `ProfilesPicker`
   leaves the view tree.
+- [x] The daily limit is one all-day activity per schedule, in both modes.
+
+  `SharedStore.isBudgetSpent`/`setBudgetSpent` hold a date stamp rather than a bare
+  flag, checked against "is that date today", so the limit refills at midnight without
+  any callback having to fire. `effectiveWantsBlock` layers it on top of `wantsBlock`
+  for both modes, which is what stops a window boundary from clearing a block the
+  limit is still enforcing. The extension checks `isActiveToday()` before enforcing a
+  threshold hit, since the tracker runs daily regardless of `weekdays`.
 - [x] Three injection points exist for tests, and nothing in the app writes to any of them.
 
   `SharedStore.defaults` is a `var` so a test can point it at a scratch `UserDefaults`
@@ -404,7 +425,7 @@ permitting.
 - Extension callbacks arrive within a few minutes of the boundary, not at the exact
 second. A 30-minute budget can overrun slightly.
 - `DeviceActivityCenter` rejects intervals under 15 minutes with `intervalTooShort`.
-- A window that crosses midnight must be split into two schedules.
+- A window that crosses midnight must be split into two windows.
 - Extension callbacks do not fire in the simulator.
 - `ApplicationToken`, `ActivityCategoryToken`, and `WebDomainToken` are opaque values
 the system issues per install. An exported profile carries them, but they only resolve

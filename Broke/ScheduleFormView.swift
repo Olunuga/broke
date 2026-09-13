@@ -14,8 +14,7 @@ struct ScheduleFormView: View {
     @State private var name: String
     @State private var mode: ScheduleMode
     @State private var weekdays: Set<Int>
-    @State private var startTime: Date
-    @State private var endTime: Date
+    @State private var windows: [EditableWindow]
     @State private var hasBudget: Bool
     @State private var budgetMinutes: Int
     @State private var isEnabled: Bool
@@ -33,27 +32,24 @@ struct ScheduleFormView: View {
         _name = State(initialValue: existingSchedule?.name ?? "")
         _mode = State(initialValue: existingSchedule?.mode ?? .block)
         _weekdays = State(initialValue: existingSchedule?.weekdays ?? [])
-        _startTime = State(initialValue: Self.date(from: existingSchedule?.startTime ?? DateComponents(hour: 9, minute: 0)))
-        _endTime = State(initialValue: Self.date(from: existingSchedule?.endTime ?? DateComponents(hour: 17, minute: 0)))
+        let storedWindows = existingSchedule?.sortedWindows ?? []
+        _windows = State(initialValue: storedWindows.isEmpty
+            ? [EditableWindow(startHour: 9, endHour: 17)]
+            : storedWindows.map(EditableWindow.init))
         _hasBudget = State(initialValue: existingSchedule?.budgetMinutes != nil)
         _budgetMinutes = State(initialValue: existingSchedule?.budgetMinutes ?? 30)
         _isEnabled = State(initialValue: existingSchedule?.isEnabled ?? true)
     }
 
-    private static func date(from components: DateComponents) -> Date {
-        Calendar.current.date(from: components) ?? Date()
+    private var scheduleWindows: [ScheduleWindow] {
+        windows.map(\.scheduleWindow)
     }
 
     private var durationMinutes: Int {
-        let start = Calendar.current.dateComponents([.hour, .minute], from: startTime)
-        let end = Calendar.current.dateComponents([.hour, .minute], from: endTime)
-        let startTotal = (start.hour ?? 0) * 60 + (start.minute ?? 0)
-        let endTotal = (end.hour ?? 0) * 60 + (end.minute ?? 0)
-        return endTotal - startTotal
+        scheduleWindows.reduce(0) { $0 + $1.durationMinutes }
     }
 
-    /// `.allow` caps use inside its window, so the cap can't exceed the window itself.
-    /// `.block` caps use in the rest of the day, outside the blocked window.
+    /// `.allow` caps use inside the windows, so the cap can't exceed their total; `.block` caps the rest of the day.
     private var budgetMaximumMinutes: Int {
         switch mode {
         case .allow: return max(durationMinutes, 1)
@@ -69,13 +65,13 @@ struct ScheduleFormView: View {
     }
 
     private var budgetToggleLabel: String {
-        mode == .allow ? "Limit use inside window" : "Limit use outside window"
+        mode == .allow ? "Limit use inside windows" : "Limit use outside windows"
     }
 
     private var budgetFooter: String {
         switch mode {
-        case .allow: return "Caps how much of the allowed window can be used per day."
-        case .block: return "Caps how much can be used per day outside the blocked window."
+        case .allow: return "Caps total use per day across every window above."
+        case .block: return "Caps total use per day outside every window above."
         }
     }
 
@@ -83,11 +79,17 @@ struct ScheduleFormView: View {
         if weekdays.isEmpty {
             return "Pick at least one day."
         }
-        if durationMinutes <= 0 {
-            return "End time must be after start time. A window can't cross midnight — use two schedules instead."
+        if scheduleWindows.isEmpty {
+            return "Add at least one window."
         }
-        if durationMinutes < Schedule.minimumDurationMinutes {
-            return "Window must be at least \(Schedule.minimumDurationMinutes) minutes."
+        if scheduleWindows.contains(where: { $0.durationMinutes <= 0 }) {
+            return "Each window must end after it starts. A window can't cross midnight — add a second window instead."
+        }
+        if scheduleWindows.contains(where: { !$0.isValid }) {
+            return "Each window must be at least \(Schedule.minimumDurationMinutes) minutes."
+        }
+        if Schedule(id: UUID(), name: name, mode: mode, weekdays: weekdays, windows: scheduleWindows).hasOverlappingWindows {
+            return "Windows can't overlap."
         }
         if hasBudget && budgetMinutes < 1 {
             return "Daily limit must be at least 1 minute."
@@ -130,9 +132,18 @@ struct ScheduleFormView: View {
                     .buttonStyle(.plain)
                 }
 
-                Section(header: Text("Window")) {
-                    DatePicker("Start", selection: $startTime, displayedComponents: .hourAndMinute)
-                    DatePicker("End", selection: $endTime, displayedComponents: .hourAndMinute)
+                Section(header: Text("Windows"), footer: Text("Add a second window for a split day, such as an early block and an evening one.")) {
+                    ForEach($windows) { $window in
+                        VStack {
+                            DatePicker("Start", selection: $window.start, displayedComponents: .hourAndMinute)
+                            DatePicker("End", selection: $window.end, displayedComponents: .hourAndMinute)
+                        }
+                    }
+                    .onDelete(perform: windows.count > 1 ? deleteWindows : nil)
+
+                    Button(action: addWindow) {
+                        Label("Add Window", systemImage: "plus")
+                    }
                 }
 
                 Section(header: Text("Daily Limit"), footer: Text(budgetFooter)) {
@@ -180,6 +191,16 @@ struct ScheduleFormView: View {
         }
     }
 
+    private func addWindow() {
+        let latestEnd = scheduleWindows.map(\.endMinutes).max() ?? 0
+        let start = min(latestEnd + 60, 22 * 60)
+        windows.append(EditableWindow(startHour: start / 60, endHour: min(start / 60 + 2, 23)))
+    }
+
+    private func deleteWindows(at offsets: IndexSet) {
+        windows.remove(atOffsets: offsets)
+    }
+
     private func toggle(_ day: Int) {
         if weekdays.contains(day) {
             weekdays.remove(day)
@@ -191,16 +212,12 @@ struct ScheduleFormView: View {
     private func save() {
         guard validationError == nil else { return }
 
-        let start = Calendar.current.dateComponents([.hour, .minute], from: startTime)
-        let end = Calendar.current.dateComponents([.hour, .minute], from: endTime)
-
         let schedule = Schedule(
             id: existingSchedule?.id ?? UUID(),
             name: name,
             mode: mode,
             weekdays: weekdays,
-            startTime: DateComponents(hour: start.hour, minute: start.minute),
-            endTime: DateComponents(hour: end.hour, minute: end.minute),
+            windows: scheduleWindows,
             budgetMinutes: hasBudget ? budgetMinutes : nil,
             isEnabled: isEnabled
         )
@@ -211,5 +228,37 @@ struct ScheduleFormView: View {
             profileManager.addSchedule(schedule, toProfileWithId: profileId)
         }
         onDismiss()
+    }
+}
+
+/// A window while it is being edited. `DatePicker` binds to `Date`, and the window's id survives the edit so its registered activity is not needlessly torn down.
+private struct EditableWindow: Identifiable {
+    let id: UUID
+    var start: Date
+    var end: Date
+
+    init(_ window: ScheduleWindow) {
+        id = window.id
+        start = Self.date(from: window.startTime)
+        end = Self.date(from: window.endTime)
+    }
+
+    init(startHour: Int, endHour: Int) {
+        id = UUID()
+        start = Self.date(from: DateComponents(hour: startHour, minute: 0))
+        end = Self.date(from: DateComponents(hour: endHour, minute: 0))
+    }
+
+    var scheduleWindow: ScheduleWindow {
+        ScheduleWindow(id: id, startTime: Self.components(from: start), endTime: Self.components(from: end))
+    }
+
+    private static func date(from components: DateComponents) -> Date {
+        Calendar.current.date(from: components) ?? Date()
+    }
+
+    private static func components(from date: Date) -> DateComponents {
+        let parts = Calendar.current.dateComponents([.hour, .minute], from: date)
+        return DateComponents(hour: parts.hour, minute: parts.minute)
     }
 }
