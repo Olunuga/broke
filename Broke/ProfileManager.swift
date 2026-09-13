@@ -152,6 +152,59 @@ class ProfileManager: ObservableObject {
         }
     }
 
+    // MARK: - Import
+
+    /// Appends every profile in `transfer`, leaving the current profile alone.
+    @discardableResult
+    func importProfiles(from transfer: ProfileTransfer) -> ProfileImportResult {
+        let keepSelections = transfer.carriesUsableSelections
+        var importedNames: [String] = []
+
+        for item in transfer.profiles {
+            let name = uniqueProfileName(from: item.name)
+            // A schedule's id names its ManagedSettingsStore and DeviceActivityName, so a reused one would collide.
+            let schedules = item.schedules.map { schedule in
+                Schedule(
+                    id: UUID(),
+                    name: schedule.name,
+                    mode: schedule.mode,
+                    weekdays: schedule.weekdays,
+                    startTime: schedule.startTime,
+                    endTime: schedule.endTime,
+                    budgetMinutes: schedule.budgetMinutes,
+                    isEnabled: keepSelections && schedule.isEnabled
+                )
+            }
+
+            profiles.append(
+                Profile(
+                    name: name,
+                    appTokens: keepSelections ? item.appTokens : [],
+                    categoryTokens: keepSelections ? item.categoryTokens : [],
+                    webDomainTokens: keepSelections ? item.webDomainTokens : [],
+                    schedules: schedules,
+                    restrictWebToAllowlist: item.restrictWebToAllowlist,
+                    icon: item.icon
+                )
+            )
+            importedNames.append(name)
+        }
+
+        saveProfiles()
+        ScheduleManager.sync(profiles: profiles)
+        BrokeLog.log("imported \(importedNames.count) profiles, selections kept=\(keepSelections)")
+
+        return ProfileImportResult(importedNames: importedNames, keptSelections: keepSelections)
+    }
+
+    private func uniqueProfileName(from name: String) -> String {
+        let base = name.isEmpty ? "Imported Profile" : name
+        guard profiles.contains(where: { $0.name == base }) else { return base }
+        var suffix = 2
+        while profiles.contains(where: { $0.name == "\(base) \(suffix)" }) { suffix += 1 }
+        return "\(base) \(suffix)"
+    }
+
     // MARK: - Schedules
 
     func addSchedule(_ schedule: Schedule, toProfileWithId id: UUID) {

@@ -26,6 +26,7 @@ Out of respect to the original team, Broke is not available on the app store for
 * Minimalist interface
 * Open-source, customizable codebase
 * Supports multiple profiles
+* Exports and imports profiles as a file
 * Allows creating a Broke-compatible tags (requires a physical tag)
 
 ## Creating a Broke tag

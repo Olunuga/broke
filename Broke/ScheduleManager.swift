@@ -10,15 +10,29 @@ import Foundation
 import DeviceActivity
 import ManagedSettings
 
+/// The part of `DeviceActivityCenter` that `sync` uses. Registration has no readable state, so tests substitute a recorder.
+protocol ActivityRegistering {
+    func stopMonitoring(_ activities: [DeviceActivityName])
+    func startMonitoring(
+        _ activity: DeviceActivityName,
+        during schedule: DeviceActivitySchedule,
+        events: [DeviceActivityEvent.Name: DeviceActivityEvent]
+    ) throws
+}
+
+extension DeviceActivityCenter: ActivityRegistering {}
+
 enum ScheduleManager {
-    private static let center = DeviceActivityCenter()
+    /// Assigned only by tests. Nothing in the app writes to either of these.
+    static var center: ActivityRegistering = DeviceActivityCenter()
+    static var shieldTarget: (ManagedSettingsStore.Name) -> ShieldTarget = { ManagedSettingsStore(named: $0) }
 
     /// Reconciles DeviceActivityCenter's registered activities, and every schedule's
     /// shield state, with the current set of profiles. Call after any schedule add,
     /// edit, delete, or enable/disable, and once at app launch.
     static func sync(profiles: [Profile]) {
         BrokeLog.log("sync start: profiles=\(profiles.count) manualBlocking=\(SharedStore.isManuallyBlocking) suspended=\(SharedStore.isSuspended) suspendedUntil=\(BrokeLog.timestamp(SharedStore.suspendedUntil))")
-        center.stopMonitoring()
+        center.stopMonitoring([])
 
         let allSchedules = profiles.flatMap { $0.schedules }
         let currentIds = Set(allSchedules.map { $0.id })
@@ -35,7 +49,7 @@ enum ScheduleManager {
         }
 
         for schedule in allSchedules {
-            let store = ManagedSettingsStore(named: schedule.storeName)
+            let store = shieldTarget(schedule.storeName)
             let shouldBlock = schedule.isEnabled && schedule.isValid && !SharedStore.isSuspended && schedule.effectiveWantsBlock()
 
             if shouldBlock, let profile = profileBySchedule[schedule.id] {
@@ -49,7 +63,7 @@ enum ScheduleManager {
 
         for removedId in previousIds.subtracting(currentIds) {
             BrokeLog.log("sync clears store of deleted schedule [\(removedId.uuidString.prefix(8))]")
-            ShieldWriter.clear(ManagedSettingsStore(named: .init(removedId.uuidString)))
+            ShieldWriter.clear(shieldTarget(.init(removedId.uuidString)))
         }
 
         SharedStore.setKnownScheduleIds(currentIds)
@@ -204,7 +218,7 @@ enum ScheduleManager {
         let wakeSchedule = DeviceActivitySchedule(intervalStart: start, intervalEnd: end, repeats: false)
 
         do {
-            try center.startMonitoring(SharedStore.resumeCheckActivityName, during: wakeSchedule)
+            try center.startMonitoring(SharedStore.resumeCheckActivityName, during: wakeSchedule, events: [:])
             BrokeLog.log("resume check registered for \(BrokeLog.timestamp(date))")
         } catch {
             BrokeLog.log("resume check FAILED for \(BrokeLog.timestamp(date)): \(error)")

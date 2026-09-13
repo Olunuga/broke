@@ -2,9 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Build
+## Build and test
 
-No test target exists. Build is the only check.
+```bash
+xcodebuild test -project Broke.xcodeproj -scheme Broke \
+  -destination 'platform=iOS Simulator,name=iPhone 15 Pro' CODE_SIGNING_ALLOWED=NO
+```
+
+`BrokeTests` is an XCTest bundle hosted by the app, so it inherits the App Group and
+Family Controls entitlements. Subclass `BrokeTestCase`: it points `SharedStore.defaults`
+at a scratch suite and `ScheduleManager`'s two injection points at recorders, then puts
+all three back. Tests cannot build an `ApplicationToken`, so every fixture profile carries
+empty token sets.
 
 ```bash
 xcodebuild -project Broke.xcodeproj -scheme Broke \
@@ -17,6 +26,26 @@ Build `-configuration Release` as well after touching anything inside `#if DEBUG
 Run on a device from Xcode (⌘R uses the Debug configuration). Two behaviors do not work in the simulator: `DeviceActivityMonitor` callbacks never fire, and NFC is unavailable.
 
 Bundle ID `com.Brokeest.ios`, App Group `group.com.Brokeest.ios`, deployment target iOS 16.4.
+
+## Every change carries tests
+
+New behavior, and every bug fix, ships with tests in `BrokeTests` in the same change. The
+test suite passing is part of the change being done, alongside the Debug and Release builds.
+
+Test the decision, not the view. A feature's logic belongs somewhere a test can reach it:
+`Schedule`, `SharedStore`, `ProfileManager`, `ShieldWriter`, `ScheduleManager`, or a type
+like `ProfileTransfer`. A SwiftUI view holds the presentation and the user's intent, and
+nothing else. If a rule can only be reached by tapping, move the rule.
+
+Three injection points exist for this, each with a production default the app never
+replaces: `SharedStore.defaults`, `ScheduleManager.center`, and
+`ScheduleManager.shieldTarget`. Reach for one of them before you decide something is
+untestable. Extend `Fixture` in `BrokeTestSupport.swift` rather than building profiles and
+schedules inline.
+
+Two things genuinely cannot be tested here, and only these two: anything needing a real
+`ApplicationToken`, and anything needing NFC, the Keychain, or a `DeviceActivityMonitor`
+callback. Say so in the change rather than leaving the gap silent.
 
 ## Targets and shared files
 

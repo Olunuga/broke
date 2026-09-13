@@ -13,7 +13,10 @@ import os
 enum SharedStore {
     static let appGroupID = "group.com.Brokeest.ios"
 
-    static let defaults: UserDefaults = {
+    /// Assigned only by tests, which point it at a scratch suite so nothing they write reaches the real App Group.
+    static var defaults: UserDefaults = appGroupDefaults
+
+    static let appGroupDefaults: UserDefaults = {
         guard let defaults = UserDefaults(suiteName: appGroupID) else {
             fatalError("App Group '\(appGroupID)' is not configured. Add it in Signing & Capabilities.")
         }
@@ -40,6 +43,20 @@ enum SharedStore {
         static let emergencyUnblocksUsedCount = "emergencyUnblocksUsedCountKey"
         static let profileEditUnlockedUntil = "profileEditUnlockedUntil"
         static let recentLogLines = "recentLogLines"
+        static let installIdentifier = "installIdentifier"
+    }
+
+    // MARK: - Install identity
+
+    /// Names this install, so an exported profile can say whether its app, category, and website tokens still resolve.
+    static var installIdentifier: UUID {
+        if let string = defaults.string(forKey: Key.installIdentifier),
+           let identifier = UUID(uuidString: string) {
+            return identifier
+        }
+        let identifier = UUID()
+        defaults.set(identifier.uuidString, forKey: Key.installIdentifier)
+        return identifier
     }
 
     // MARK: - Suspension durations

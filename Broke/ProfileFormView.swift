@@ -18,6 +18,8 @@ struct ProfileFormView: View {
     @State private var activitySelection: FamilyActivitySelection
     @State private var restrictWebToAllowlist: Bool
     @State private var showDeleteConfirmation = false
+    @State private var exportFile: ProfileExportFile?
+    @State private var exportError: String?
     let profile: Profile?
     let onDismiss: () -> Void
 
@@ -126,6 +128,16 @@ struct ProfileFormView: View {
 
                 if profile != nil {
                     Section {
+                        Button(action: exportProfile) {
+                            Label("Export Profile", systemImage: "square.and.arrow.up")
+                        }
+                        .disabled(profileName.isEmpty)
+                        Text("The file carries the name, icon, and schedules. App, category, and website selections only work again on this device.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+
+                    Section {
                         Button(action: { showDeleteConfirmation = true }) {
                             Text("Delete Profile")
                                 .foregroundColor(.red)
@@ -151,6 +163,17 @@ struct ProfileFormView: View {
                         })
                 }
             }
+            .sheet(item: $exportFile) { file in
+                ShareSheet(url: file.url)
+            }
+            .alert(
+                "Export Failed",
+                isPresented: Binding(get: { exportError != nil }, set: { if !$0 { exportError = nil } })
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(exportError ?? "")
+            }
             .alert(isPresented: $showDeleteConfirmation) {
                 Alert(
                     title: Text("Delete Profile"),
@@ -175,6 +198,26 @@ struct ProfileFormView: View {
         }
     }
     
+    /// Exports what the form shows, so an edit made but not yet saved still lands in the file.
+    private func exportProfile() {
+        let snapshot = Profile(
+            name: profileName,
+            appTokens: activitySelection.applicationTokens,
+            categoryTokens: activitySelection.categoryTokens,
+            webDomainTokens: activitySelection.webDomainTokens,
+            schedules: currentSchedules,
+            restrictWebToAllowlist: restrictWebToAllowlist,
+            icon: profileIcon
+        )
+
+        do {
+            let transfer = ProfileTransfer(exporting: [snapshot])
+            exportFile = ProfileExportFile(url: try transfer.writeToTemporaryFile(named: profileName))
+        } catch {
+            exportError = error.localizedDescription
+        }
+    }
+
     private func handleSave() {
         if let existingProfile = profile {
             profileManager.updateProfile(
