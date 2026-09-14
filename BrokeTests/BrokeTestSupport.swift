@@ -117,6 +117,10 @@ enum Fixture {
 
     static let everyDay: Set<Int> = [1, 2, 3, 4, 5, 6, 7]
 
+    static func window(_ startHour: Int, _ startMinute: Int, _ endHour: Int, _ endMinute: Int) -> ScheduleWindow {
+        ScheduleWindow(startTime: time(startHour, startMinute), endTime: time(endHour, endMinute))
+    }
+
     static func schedule(
         id: UUID = UUID(),
         name: String = "Test",
@@ -127,13 +131,32 @@ enum Fixture {
         budgetMinutes: Int? = nil,
         isEnabled: Bool = true
     ) -> Schedule {
+        schedule(
+            id: id,
+            name: name,
+            mode: mode,
+            weekdays: weekdays,
+            windows: [ScheduleWindow(startTime: start, endTime: end)],
+            budgetMinutes: budgetMinutes,
+            isEnabled: isEnabled
+        )
+    }
+
+    static func schedule(
+        id: UUID = UUID(),
+        name: String = "Test",
+        mode: ScheduleMode = .block,
+        weekdays: Set<Int> = everyDay,
+        windows: [ScheduleWindow],
+        budgetMinutes: Int? = nil,
+        isEnabled: Bool = true
+    ) -> Schedule {
         Schedule(
             id: id,
             name: name,
             mode: mode,
             weekdays: weekdays,
-            startTime: start,
-            endTime: end,
+            windows: windows,
             budgetMinutes: budgetMinutes,
             isEnabled: isEnabled
         )
@@ -183,7 +206,7 @@ enum StoreKey {
     static let emergencyUsedDate = "emergencyUnblocksUsedDateKey"
     static let emergencyUsedCount = "emergencyUnblocksUsedCountKey"
 
-    static func outsideWindowBudget(_ id: UUID) -> String {
-        "outsideWindowBudgetExceededDate-\(id.uuidString)"
+    static func budgetSpent(_ id: UUID) -> String {
+        "budgetSpentDate-\(id.uuidString)"
     }
 }

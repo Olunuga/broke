@@ -45,6 +45,7 @@
 		AC1000000000000000000900 /* BrokeActivityBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1000000000000000000300 /* BrokeActivityBundle.swift */; };
 		AC1000000000000000000A00 /* BrokeActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AC1000000000000000000500 /* BrokeActivity.appex */; settings = {ATTRIBUTES = (RemoveHeaderOnCopy, ); }; };
 		BC2000000000000000000200 /* BrokeTestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC2000000000000000000100 /* BrokeTestSupport.swift */; };
+		BC2000000000000000000208 /* ScheduleMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC2000000000000000000108 /* ScheduleMigrationTests.swift */; };
 		BC2000000000000000000201 /* ScheduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC2000000000000000000101 /* ScheduleTests.swift */; };
 		BC2000000000000000000202 /* ProfileCodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC2000000000000000000102 /* ProfileCodingTests.swift */; };
 		BC2000000000000000000203 /* ProfileTransferTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC2000000000000000000103 /* ProfileTransferTests.swift */; };
@@ -180,6 +181,7 @@
 		AC1000000000000000000500 /* BrokeActivity.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BrokeActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		BC2000000000000000000001 /* BrokeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BrokeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BC2000000000000000000100 /* BrokeTestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrokeTestSupport.swift; sourceTree = "<group>"; };
+		BC2000000000000000000108 /* ScheduleMigrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleMigrationTests.swift; sourceTree = "<group>"; };
 		BC2000000000000000000101 /* ScheduleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleTests.swift; sourceTree = "<group>"; };
 		BC2000000000000000000102 /* ProfileCodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileCodingTests.swift; sourceTree = "<group>"; };
 		BC2000000000000000000103 /* ProfileTransferTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileTransferTests.swift; sourceTree = "<group>"; };
@@ -353,6 +355,7 @@
 			isa = PBXGroup;
 			children = (
 				BC2000000000000000000100 /* BrokeTestSupport.swift */,
+				BC2000000000000000000108 /* ScheduleMigrationTests.swift */,
 				BC2000000000000000000101 /* ScheduleTests.swift */,
 				BC2000000000000000000102 /* ProfileCodingTests.swift */,
 				BC2000000000000000000103 /* ProfileTransferTests.swift */,
@@ -652,6 +655,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BC2000000000000000000200 /* BrokeTestSupport.swift in Sources */,
+				BC2000000000000000000208 /* ScheduleMigrationTests.swift in Sources */,
 				BC2000000000000000000201 /* ScheduleTests.swift in Sources */,
 				BC2000000000000000000202 /* ProfileCodingTests.swift in Sources */,
 				BC2000000000000000000203 /* ProfileTransferTests.swift in Sources */,

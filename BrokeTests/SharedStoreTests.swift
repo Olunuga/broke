@@ -59,20 +59,20 @@ final class SharedStoreTests: BrokeTestCase {
 
     func testBudgetFlagAppliesOnlyToTheDayItWasStamped() {
         let id = UUID()
-        SharedStore.setOutsideWindowBudgetExceeded(true, for: id)
-        XCTAssertTrue(SharedStore.isOutsideWindowBudgetExceeded(for: id))
+        SharedStore.setBudgetSpent(true, for: id)
+        XCTAssertTrue(SharedStore.isBudgetSpent(for: id))
 
         let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date())!
-        SharedStore.defaults.set(yesterday, forKey: StoreKey.outsideWindowBudget(id))
-        XCTAssertFalse(SharedStore.isOutsideWindowBudgetExceeded(for: id))
+        SharedStore.defaults.set(yesterday, forKey: StoreKey.budgetSpent(id))
+        XCTAssertFalse(SharedStore.isBudgetSpent(for: id))
     }
 
     func testBudgetFlagIsPerSchedule() {
         let spent = UUID()
-        SharedStore.setOutsideWindowBudgetExceeded(true, for: spent)
+        SharedStore.setBudgetSpent(true, for: spent)
 
-        XCTAssertTrue(SharedStore.isOutsideWindowBudgetExceeded(for: spent))
-        XCTAssertFalse(SharedStore.isOutsideWindowBudgetExceeded(for: UUID()))
+        XCTAssertTrue(SharedStore.isBudgetSpent(for: spent))
+        XCTAssertFalse(SharedStore.isBudgetSpent(for: UUID()))
     }
 
     // MARK: - Profile editing grant
@@ -148,25 +148,44 @@ final class SharedStoreTests: BrokeTestCase {
         XCTAssertEqual(found.schedule.name, "Evenings")
     }
 
+    func testWindowLookupFindsItsScheduleAndProfile() throws {
+        let target = Fixture.schedule(name: "Split", windows: [Fixture.window(6, 0, 8, 0), Fixture.window(20, 0, 22, 0)])
+        SharedStore.saveProfiles([
+            Fixture.profile(name: "First", schedules: [Fixture.schedule(name: "Other")]),
+            Fixture.profile(name: "Second", schedules: [target]),
+        ])
+
+        let found = try XCTUnwrap(SharedStore.window(withId: target.windows[1].id))
+
+        XCTAssertEqual(found.profile.name, "Second")
+        XCTAssertEqual(found.schedule.id, target.id)
+        XCTAssertEqual(found.window.id, target.windows[1].id)
+    }
+
+    func testWindowLookupReturnsNilForAnUnknownId() {
+        SharedStore.saveProfiles([Fixture.profile(schedules: [Fixture.schedule()])])
+        XCTAssertNil(SharedStore.window(withId: UUID()))
+    }
+
     func testScheduleLookupReturnsNilForAnUnknownId() {
         SharedStore.saveProfiles([Fixture.profile(schedules: [Fixture.schedule()])])
         XCTAssertNil(SharedStore.schedule(withId: UUID()))
     }
 
-    func testOutsideWindowActivityNameResolvesToItsSchedule() throws {
+    func testBudgetActivityNameResolvesToItsSchedule() throws {
         let target = Fixture.schedule(name: "Evenings")
         SharedStore.saveProfiles([Fixture.profile(schedules: [target])])
 
-        let found = try XCTUnwrap(SharedStore.schedule(forOutsideWindowActivity: target.outsideWindowActivityName))
+        let found = try XCTUnwrap(SharedStore.schedule(forBudgetActivity: target.budgetActivityName))
 
         XCTAssertEqual(found.schedule.id, target.id)
     }
 
-    func testAPlainActivityNameIsNotTreatedAsAnOutsideWindowOne() {
+    func testAPlainActivityNameIsNotTreatedAsABudgetOne() {
         let target = Fixture.schedule()
         SharedStore.saveProfiles([Fixture.profile(schedules: [target])])
 
-        XCTAssertNil(SharedStore.schedule(forOutsideWindowActivity: target.activityName))
+        XCTAssertNil(SharedStore.schedule(forBudgetActivity: target.windows[0].activityName))
     }
 
     // MARK: - Known schedule ids

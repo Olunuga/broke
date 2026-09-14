@@ -87,33 +87,33 @@ final class ScheduleTests: BrokeTestCase {
 
     // MARK: - Outside-window budget
 
-    func testSpentOutsideWindowBudgetKeepsABlockScheduleBlockingAfterItsWindow() {
+    func testSpentLimitKeepsABlockScheduleBlockingAfterItsWindow() {
         let schedule = Fixture.schedule(mode: .block, weekdays: Fixture.everyDay, start: Fixture.time(0, 0), end: Fixture.time(0, 15))
-        SharedStore.setOutsideWindowBudgetExceeded(true, for: schedule.id)
+        SharedStore.setBudgetSpent(true, for: schedule.id)
 
         XCTAssertFalse(schedule.wantsBlock(referenceDate: Date()))
         XCTAssertTrue(schedule.effectiveWantsBlock(referenceDate: Date()))
     }
 
-    func testSpentBudgetDoesNotAffectAnAllowSchedule() {
+    func testSpentLimitBlocksAnAllowScheduleInsideItsWindow() {
         let schedule = Fixture.schedule(mode: .allow, weekdays: Fixture.everyDay, start: Fixture.time(0, 0), end: Fixture.time(23, 59))
-        SharedStore.setOutsideWindowBudgetExceeded(true, for: schedule.id)
+        SharedStore.setBudgetSpent(true, for: schedule.id)
 
-        // `.allow` inside its window wants no block, and the budget flag is a `.block` concern.
-        XCTAssertEqual(schedule.effectiveWantsBlock(referenceDate: Date()), schedule.wantsBlock(referenceDate: Date()))
+        XCTAssertFalse(schedule.wantsBlock(referenceDate: Date()))
+        XCTAssertTrue(schedule.effectiveWantsBlock(referenceDate: Date()))
     }
 
-    func testSpentBudgetDoesNotBlockOnADayTheScheduleDoesNotRun() {
+    func testSpentLimitDoesNotBlockOnADayTheScheduleDoesNotRun() {
         let schedule = Fixture.schedule(mode: .block, weekdays: [2], start: Fixture.time(9, 0), end: Fixture.time(17, 0))
-        SharedStore.setOutsideWindowBudgetExceeded(true, for: schedule.id)
+        SharedStore.setBudgetSpent(true, for: schedule.id)
 
         XCTAssertFalse(schedule.effectiveWantsBlock(referenceDate: sunday, calendar: calendar))
     }
 
-    func testClearedBudgetStopsEnforcing() {
+    func testClearedLimitStopsEnforcing() {
         let schedule = Fixture.schedule(mode: .block, weekdays: Fixture.everyDay, start: Fixture.time(0, 0), end: Fixture.time(0, 15))
-        SharedStore.setOutsideWindowBudgetExceeded(true, for: schedule.id)
-        SharedStore.setOutsideWindowBudgetExceeded(false, for: schedule.id)
+        SharedStore.setBudgetSpent(true, for: schedule.id)
+        SharedStore.setBudgetSpent(false, for: schedule.id)
 
         XCTAssertFalse(schedule.effectiveWantsBlock(referenceDate: Date()))
     }
@@ -135,5 +135,102 @@ final class ScheduleTests: BrokeTestCase {
     func testNextTransitionIsNilWhenNoDayIsScheduled() {
         let schedule = Fixture.schedule(weekdays: [], start: Fixture.time(9, 0), end: Fixture.time(17, 0))
         XCTAssertNil(schedule.nextTransition(referenceDate: monday, calendar: calendar))
+    }
+
+    // MARK: - Several windows in one schedule
+
+    private var morningAndEvening: [ScheduleWindow] {
+        [Fixture.window(6, 0, 8, 0), Fixture.window(20, 0, 22, 0)]
+    }
+
+    func testAWindowIsOpenInsideEitherSpanAndNotBetweenThem() {
+        let schedule = Fixture.schedule(weekdays: [2], windows: morningAndEvening)
+
+        XCTAssertTrue(schedule.isUsable(referenceDate: Fixture.date(2026, 9, 14, 7, 0), calendar: calendar))
+        XCTAssertTrue(schedule.isUsable(referenceDate: Fixture.date(2026, 9, 14, 21, 0), calendar: calendar))
+        XCTAssertFalse(schedule.isUsable(referenceDate: Fixture.date(2026, 9, 14, 12, 0), calendar: calendar))
+    }
+
+    func testBlockModeBlocksInEveryWindow() {
+        let schedule = Fixture.schedule(mode: .block, weekdays: [2], windows: morningAndEvening)
+
+        XCTAssertTrue(schedule.wantsBlock(referenceDate: Fixture.date(2026, 9, 14, 7, 0), calendar: calendar))
+        XCTAssertTrue(schedule.wantsBlock(referenceDate: Fixture.date(2026, 9, 14, 21, 0), calendar: calendar))
+        XCTAssertFalse(schedule.wantsBlock(referenceDate: Fixture.date(2026, 9, 14, 12, 0), calendar: calendar))
+    }
+
+    func testAllowModeAllowsInEveryWindowAndBlocksBetweenThem() {
+        let schedule = Fixture.schedule(mode: .allow, weekdays: [2], windows: morningAndEvening)
+
+        XCTAssertFalse(schedule.wantsBlock(referenceDate: Fixture.date(2026, 9, 14, 7, 0), calendar: calendar))
+        XCTAssertFalse(schedule.wantsBlock(referenceDate: Fixture.date(2026, 9, 14, 21, 0), calendar: calendar))
+        XCTAssertTrue(schedule.wantsBlock(referenceDate: Fixture.date(2026, 9, 14, 12, 0), calendar: calendar))
+        XCTAssertTrue(schedule.wantsBlock(referenceDate: Fixture.date(2026, 9, 13, 7, 0), calendar: calendar))
+    }
+
+    func testDurationIsTheTotalOfEveryWindow() {
+        XCTAssertEqual(Fixture.schedule(windows: morningAndEvening).durationMinutes, 240)
+    }
+
+    func testNextTransitionPicksTheNearestBoundaryAcrossWindows() {
+        let schedule = Fixture.schedule(weekdays: [2], windows: morningAndEvening)
+
+        XCTAssertEqual(
+            schedule.nextTransition(referenceDate: Fixture.date(2026, 9, 14, 9, 0), calendar: calendar),
+            Fixture.date(2026, 9, 14, 20, 0)
+        )
+        XCTAssertEqual(
+            schedule.nextTransition(referenceDate: Fixture.date(2026, 9, 14, 7, 0), calendar: calendar),
+            Fixture.date(2026, 9, 14, 8, 0)
+        )
+    }
+
+    // MARK: - Validity across windows
+
+    func testOverlappingWindowsAreInvalid() {
+        let schedule = Fixture.schedule(windows: [Fixture.window(9, 0, 12, 0), Fixture.window(11, 0, 14, 0)])
+
+        XCTAssertTrue(schedule.hasOverlappingWindows)
+        XCTAssertFalse(schedule.isValid)
+    }
+
+    func testWindowsThatTouchWithoutOverlappingAreValid() {
+        let schedule = Fixture.schedule(windows: [Fixture.window(9, 0, 12, 0), Fixture.window(12, 0, 14, 0)])
+
+        XCTAssertFalse(schedule.hasOverlappingWindows)
+        XCTAssertTrue(schedule.isValid)
+    }
+
+    func testOneWindowUnderTheMinimumMakesTheWholeScheduleInvalid() {
+        let schedule = Fixture.schedule(windows: [Fixture.window(9, 0, 12, 0), Fixture.window(20, 0, 20, 10)])
+
+        XCTAssertFalse(schedule.isValid)
+    }
+
+    func testScheduleWithNoWindowsIsInvalid() {
+        XCTAssertFalse(Fixture.schedule(windows: []).isValid)
+    }
+
+    func testSortedWindowsOrdersByStart() {
+        let schedule = Fixture.schedule(windows: [Fixture.window(20, 0, 22, 0), Fixture.window(6, 0, 8, 0)])
+
+        XCTAssertEqual(schedule.sortedWindows.map(\.startMinutes), [360, 1200])
+    }
+
+    // MARK: - Activity names
+
+    func testEachWindowCarriesItsOwnActivityName() {
+        let schedule = Fixture.schedule(windows: morningAndEvening)
+        let names = schedule.windows.map(\.activityName.rawValue)
+
+        XCTAssertEqual(Set(names).count, 2)
+        XCTAssertEqual(names, schedule.windows.map(\.id.uuidString))
+    }
+
+    func testBudgetActivityIsNamedForTheSchedule() {
+        let schedule = Fixture.schedule()
+
+        XCTAssertEqual(schedule.budgetActivityName.rawValue, "\(schedule.id.uuidString)-budget")
+        XCTAssertEqual(schedule.storeName.rawValue, schedule.id.uuidString)
     }
 }

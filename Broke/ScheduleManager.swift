@@ -126,47 +126,40 @@ enum ScheduleManager {
     }
 
     private static func startMonitoring(_ schedule: Schedule, profile: Profile) {
-        let activitySchedule = DeviceActivitySchedule(
-            intervalStart: schedule.startTime,
-            intervalEnd: schedule.endTime,
-            repeats: true
-        )
+        for window in schedule.windows {
+            let activitySchedule = DeviceActivitySchedule(
+                intervalStart: window.startTime,
+                intervalEnd: window.endTime,
+                repeats: true
+            )
 
-        var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
-        if schedule.mode == .allow, let budgetMinutes = schedule.budgetMinutes, budgetMinutes > 0 {
-            events[schedule.budgetEventName] = budgetEvent(minutes: budgetMinutes, profile: profile)
+            do {
+                try center.startMonitoring(window.activityName, during: activitySchedule, events: [:])
+                BrokeLog.log("monitoring registered: \(schedule.decisionSummary()) window=[\(window.id.uuidString.prefix(8))]")
+            } catch {
+                BrokeLog.log("monitoring FAILED for '\(schedule.name)' window [\(window.id.uuidString.prefix(8))]: \(error)")
+            }
         }
 
-        do {
-            try center.startMonitoring(schedule.activityName, during: activitySchedule, events: events)
-            BrokeLog.log("monitoring registered: \(schedule.decisionSummary()) events=\(events.count)")
-        } catch {
-            BrokeLog.log("monitoring FAILED for schedule '\(schedule.name)': \(error)")
-        }
-
-        if schedule.mode == .block, let budgetMinutes = schedule.budgetMinutes, budgetMinutes > 0 {
-            startOutsideWindowMonitoring(schedule, profile: profile, budgetMinutes: budgetMinutes)
+        if let budgetMinutes = schedule.budgetMinutes, budgetMinutes > 0 {
+            startBudgetMonitoring(schedule, profile: profile, budgetMinutes: budgetMinutes)
         }
     }
 
-    /// `.block`'s outside-window budget tracks the whole day, every day this schedule
-    /// runs on, rather than reusing the window's own activity — see `Schedule
-    /// .outsideWindowActivityName`. `DeviceActivitySchedule` has no weekday parameter,
-    /// so this registers daily regardless of `weekdays`; the extension checks
-    /// `isActiveToday()` before treating a threshold hit as real.
-    private static func startOutsideWindowMonitoring(_ schedule: Schedule, profile: Profile, budgetMinutes: Int) {
+    /// The limit tracks the whole day rather than any one window, so a single limit covers every window and the extension checks `isActiveToday()` before treating a hit as real.
+    private static func startBudgetMonitoring(_ schedule: Schedule, profile: Profile, budgetMinutes: Int) {
         let allDay = DeviceActivitySchedule(
             intervalStart: DateComponents(hour: 0, minute: 0),
             intervalEnd: DateComponents(hour: 23, minute: 59),
             repeats: true
         )
-        let events = [schedule.outsideWindowEventName: budgetEvent(minutes: budgetMinutes, profile: profile)]
+        let events = [schedule.budgetEventName: budgetEvent(minutes: budgetMinutes, profile: profile)]
 
         do {
-            try center.startMonitoring(schedule.outsideWindowActivityName, during: allDay, events: events)
-            BrokeLog.log("outside-window monitoring registered for '\(schedule.name)' budget=\(budgetMinutes)min")
+            try center.startMonitoring(schedule.budgetActivityName, during: allDay, events: events)
+            BrokeLog.log("budget monitoring registered for '\(schedule.name)' budget=\(budgetMinutes)min")
         } catch {
-            BrokeLog.log("outside-window monitoring FAILED for '\(schedule.name)': \(error)")
+            BrokeLog.log("budget monitoring FAILED for '\(schedule.name)': \(error)")
         }
     }
 

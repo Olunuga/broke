@@ -13,7 +13,7 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
         BrokeLog.log("intervalDidStart: activity=\(activity.rawValue)")
         guard activity != SharedStore.resumeCheckActivityName else { return }
 
-        if let (profile, schedule) = SharedStore.schedule(forOutsideWindowActivity: activity) {
+        if let (profile, schedule) = SharedStore.schedule(forBudgetActivity: activity) {
             // No explicit flag reset here. This fires on every re-registration, not
             // only at midnight — `ScheduleManager.sync` stops and restarts monitoring
             // on every launch and resume, and re-registering an activity whose
@@ -35,7 +35,7 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
             // every schedule is re-evaluated here rather than just the one that was
             // suspended.
             reapplyAllKnownSchedules()
-        } else if let (profile, schedule) = SharedStore.schedule(forOutsideWindowActivity: activity) {
+        } else if let (profile, schedule) = SharedStore.schedule(forBudgetActivity: activity) {
             apply(schedule, profile: profile)
         } else {
             applyState(for: activity)
@@ -47,32 +47,20 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
         super.eventDidReachThreshold(event, activity: activity)
         BrokeLog.log("eventDidReachThreshold: event=\(event.rawValue) activity=\(activity.rawValue) suspended=\(SharedStore.isSuspended)")
 
-        if let (profile, schedule) = SharedStore.schedule(forOutsideWindowActivity: activity),
-           event == schedule.outsideWindowEventName {
-            guard !SharedStore.isSuspended else { return }
-            BrokeLog.log("outside-window budget spent for '\(schedule.name)', enforcing today=\(schedule.isActiveToday())")
-            SharedStore.setOutsideWindowBudgetExceeded(true, for: schedule.id)
-            // Only enforce if today is actually one of this schedule's days — the
-            // tracker runs daily regardless of `weekdays`, since DeviceActivitySchedule
-            // has no weekday parameter to filter it by.
-            if schedule.isActiveToday() {
-                ShieldWriter.apply(profile, to: ManagedSettingsStore(named: schedule.storeName))
-            }
-            HardeningManager.refresh()
-            return
-        }
-
-        guard let scheduleId = UUID(uuidString: activity.rawValue),
-              let (profile, schedule) = SharedStore.schedule(withId: scheduleId),
+        guard let (profile, schedule) = SharedStore.schedule(forBudgetActivity: activity),
               event == schedule.budgetEventName,
               !SharedStore.isSuspended else {
             return
         }
 
-        // Budget spent for the rest of today's window. The threshold resets, and this
-        // clears, at the schedule's own next intervalDidStart — no separate reset
-        // logic needed.
-        ShieldWriter.apply(profile, to: ManagedSettingsStore(named: schedule.storeName))
+        BrokeLog.log("daily limit spent for '\(schedule.name)', enforcing today=\(schedule.isActiveToday())")
+        SharedStore.setBudgetSpent(true, for: schedule.id)
+        // Only enforce if today is actually one of this schedule's days — the
+        // tracker runs daily regardless of `weekdays`, since DeviceActivitySchedule
+        // has no weekday parameter to filter it by.
+        if schedule.isActiveToday() {
+            ShieldWriter.apply(profile, to: ManagedSettingsStore(named: schedule.storeName))
+        }
         HardeningManager.refresh()
     }
 
@@ -80,9 +68,9 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
     /// weekdays, so state is always recomputed from scratch here rather than assumed
     /// from which callback ran.
     private func applyState(for activity: DeviceActivityName) {
-        guard let scheduleId = UUID(uuidString: activity.rawValue),
-              let (profile, schedule) = SharedStore.schedule(withId: scheduleId) else {
-            BrokeLog.log("no schedule matches activity=\(activity.rawValue), nothing applied")
+        guard let windowId = UUID(uuidString: activity.rawValue),
+              let (profile, schedule, _) = SharedStore.window(withId: windowId) else {
+            BrokeLog.log("no window matches activity=\(activity.rawValue), nothing applied")
             return
         }
         apply(schedule, profile: profile)

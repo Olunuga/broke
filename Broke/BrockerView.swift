@@ -291,9 +291,11 @@ struct BrokerView: View {
     private func scheduleDetailLabel(for schedule: Schedule) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
-        let start = Calendar.current.date(from: schedule.startTime) ?? Date()
-        let end = Calendar.current.date(from: schedule.endTime) ?? Date()
-        var label = "\(formatter.string(from: start))–\(formatter.string(from: end))"
+        var label = schedule.sortedWindows.map { window in
+            let start = Calendar.current.date(from: window.startTime) ?? Date()
+            let end = Calendar.current.date(from: window.endTime) ?? Date()
+            return "\(formatter.string(from: start))–\(formatter.string(from: end))"
+        }.joined(separator: ", ")
         if schedule.mode == .allow, let budgetMinutes = schedule.budgetMinutes {
             label += " · \(budgetMinutes) min/day limit"
         }
@@ -627,13 +629,14 @@ struct BlockingExplanationView: View {
     private func windowLabel(for schedule: Schedule) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
-        let start = Calendar.current.date(from: schedule.startTime) ?? Date()
-        let end = Calendar.current.date(from: schedule.endTime) ?? Date()
-        return "\(formatter.string(from: start)) to \(formatter.string(from: end))"
+        return schedule.sortedWindows.map { window in
+            let start = Calendar.current.date(from: window.startTime) ?? Date()
+            let end = Calendar.current.date(from: window.endTime) ?? Date()
+            return "\(formatter.string(from: start)) to \(formatter.string(from: end))"
+        }.joined(separator: ", ")
     }
 
-    /// A budget caps use inside the window for `.allow` and outside it for `.block`,
-    /// and resets daily in both.
+    /// A limit caps use inside the windows for `.allow` and outside them for `.block`, and resets daily in both.
     private func limitLabel(for schedule: Schedule) -> String? {
         guard let budgetMinutes = schedule.budgetMinutes else { return nil }
         let scope = schedule.mode == .allow ? "inside window" : "outside window"

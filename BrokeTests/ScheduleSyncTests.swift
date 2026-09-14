@@ -42,9 +42,101 @@ final class ScheduleSyncTests: BrokeTestCase {
 
         ScheduleManager.sync(profiles: [Fixture.profile(schedules: [enabled, disabled, tooShort])])
 
-        XCTAssertTrue(center.startedActivities.contains(enabled.activityName.rawValue))
-        XCTAssertFalse(center.startedActivities.contains(disabled.activityName.rawValue))
-        XCTAssertFalse(center.startedActivities.contains(tooShort.activityName.rawValue))
+        XCTAssertTrue(center.startedActivities.contains(enabled.windows[0].activityName.rawValue))
+        XCTAssertFalse(center.startedActivities.contains(disabled.windows[0].activityName.rawValue))
+        XCTAssertFalse(center.startedActivities.contains(tooShort.windows[0].activityName.rawValue))
+    }
+
+    func testSyncRegistersOneActivityPerWindow() {
+        let schedule = Fixture.schedule(windows: [Fixture.window(6, 0, 8, 0), Fixture.window(20, 0, 22, 0)])
+
+        ScheduleManager.sync(profiles: [Fixture.profile(schedules: [schedule])])
+
+        for window in schedule.windows {
+            XCTAssertTrue(center.startedActivities.contains(window.activityName.rawValue))
+        }
+    }
+
+    func testNoBudgetActivityWithoutADailyLimit() {
+        let schedule = Fixture.schedule()
+
+        ScheduleManager.sync(profiles: [Fixture.profile(schedules: [schedule])])
+
+        XCTAssertFalse(center.startedActivities.contains(schedule.budgetActivityName.rawValue))
+    }
+
+    func testBlockModeRegistersTheBudgetActivityWhenALimitIsSet() {
+        let schedule = Fixture.schedule(mode: .block, budgetMinutes: 30)
+
+        ScheduleManager.sync(profiles: [Fixture.profile(schedules: [schedule])])
+
+        XCTAssertTrue(center.startedActivities.contains(schedule.budgetActivityName.rawValue))
+    }
+
+    func testAllowModeRegistersTheSameBudgetActivity() {
+        let schedule = Fixture.schedule(mode: .allow, budgetMinutes: 30)
+
+        ScheduleManager.sync(profiles: [Fixture.profile(schedules: [schedule])])
+
+        XCTAssertTrue(center.startedActivities.contains(schedule.budgetActivityName.rawValue))
+    }
+
+    func testASpentLimitShieldsAnAllowScheduleInsideItsWindow() throws {
+        let covering = try XCTUnwrap(Fixture.windowCoveringNow(), "no same-day window contains this minute")
+        let schedule = Fixture.schedule(mode: .allow, start: covering.start, end: covering.end, budgetMinutes: 30)
+        let profile = Fixture.profile(schedules: [schedule], restrictWebToAllowlist: true)
+
+        ScheduleManager.sync(profiles: [profile])
+        XCTAssertTrue(isCleared(schedule))
+
+        SharedStore.setBudgetSpent(true, for: schedule.id)
+        ScheduleManager.sync(profiles: [profile])
+
+        XCTAssertTrue(isShielded(schedule))
+    }
+
+    func testASpentLimitShieldsABlockScheduleOutsideItsWindow() throws {
+        let excluding = Fixture.windowExcludingNow()
+        let schedule = Fixture.schedule(mode: .block, start: excluding.start, end: excluding.end, budgetMinutes: 30)
+        let profile = Fixture.profile(schedules: [schedule], restrictWebToAllowlist: true)
+
+        ScheduleManager.sync(profiles: [profile])
+        XCTAssertTrue(isCleared(schedule))
+
+        SharedStore.setBudgetSpent(true, for: schedule.id)
+        ScheduleManager.sync(profiles: [profile])
+
+        XCTAssertTrue(isShielded(schedule))
+    }
+
+    func testASpentLimitDoesNotShieldOnADayTheScheduleDoesNotRun() throws {
+        let today = Calendar.current.component(.weekday, from: Date())
+        let otherDays = Set(1...7).subtracting([today])
+        let excluding = Fixture.windowExcludingNow()
+        let schedule = Fixture.schedule(weekdays: otherDays, start: excluding.start, end: excluding.end, budgetMinutes: 30)
+        let profile = Fixture.profile(schedules: [schedule], restrictWebToAllowlist: true)
+
+        SharedStore.setBudgetSpent(true, for: schedule.id)
+        ScheduleManager.sync(profiles: [profile])
+
+        XCTAssertTrue(isCleared(schedule))
+    }
+
+    func testShieldComposesAcrossWindowsOfOneAllowSchedule() throws {
+        let covering = try XCTUnwrap(Fixture.windowCoveringNow(), "no same-day window contains this minute")
+        let excluding = Fixture.windowExcludingNow()
+        let schedule = Fixture.schedule(
+            mode: .allow,
+            windows: [
+                ScheduleWindow(startTime: covering.start, endTime: covering.end),
+                ScheduleWindow(startTime: excluding.start, endTime: excluding.end),
+            ]
+        )
+
+        ScheduleManager.sync(profiles: [Fixture.profile(schedules: [schedule], restrictWebToAllowlist: true)])
+
+        // Now is inside one of the two windows, so an `.allow` schedule wants no block.
+        XCTAssertTrue(isCleared(schedule))
     }
 
     func testSyncStopsEverythingBeforeReRegistering() {
