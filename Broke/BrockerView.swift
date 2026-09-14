@@ -94,7 +94,13 @@ struct BrokerView: View {
                     .background(isBlocked ? Color("BlockingBackground") : Color("NonBlockingBackground"))
                 }
             }
-            .navigationBarItems(leading: leadingControls, trailing: trailingControls)
+            .toolbar {
+                // Omitted entirely rather than left empty: a bar item with nothing in it still draws its own background.
+                if hasLeadingControls {
+                    ToolbarItem(placement: .navigationBarLeading) { leadingControls }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) { trailingControls }
+            }
             .alert(isPresented: $showWrongTagAlert) {
                 Alert(
                     title: Text("Not a Broker Tag"),
@@ -401,6 +407,15 @@ struct BrokerView: View {
             }
             createTagButton
         }
+    }
+
+    /// `trailingControls` always holds at least one button, so only the leading side can empty out.
+    private var hasLeadingControls: Bool {
+        #if DEBUG
+        return true
+        #else
+        return isSuspended
+        #endif
     }
 
     private var leadingControls: some View {
