@@ -189,6 +189,47 @@ final class ScheduleSyncTests: BrokeTestCase {
         XCTAssertTrue(SharedStore.isSuspended)
     }
 
+    func testASuspensionRaisesTheDailyLimitRatherThanSpendingIt() {
+        let schedule = Fixture.schedule(mode: .allow, budgetMinutes: 30)
+        let profile = Fixture.profile(schedules: [schedule])
+
+        ScheduleManager.suspendActiveSchedules(for: 3600, profiles: [profile])
+
+        XCTAssertEqual(center.thresholdMinutes(for: schedule), 90)
+    }
+
+    func testTheDailyLimitReturnsToItsOwnSizeAfterAnEarlyResume() {
+        let schedule = Fixture.schedule(mode: .allow, budgetMinutes: 30)
+        let profile = Fixture.profile(schedules: [schedule])
+
+        ScheduleManager.suspendActiveSchedules(for: 3600, profiles: [profile])
+        ScheduleManager.endSuspension(profiles: [profile])
+
+        XCTAssertFalse(SharedStore.isSuspended)
+        XCTAssertEqual(center.thresholdMinutes(for: schedule), 30)
+    }
+
+    func testAScheduleWithNoLimitRegistersNoThresholdWhileSuspended() {
+        let schedule = Fixture.schedule()
+
+        ScheduleManager.suspendActiveSchedules(for: 3600, profiles: [Fixture.profile(schedules: [schedule])])
+
+        XCTAssertNil(center.thresholdMinutes(for: schedule))
+    }
+
+    func testEndingASuspensionRestoresTheShield() throws {
+        let covering = try XCTUnwrap(Fixture.windowCoveringNow(), "no same-day window contains this minute")
+        let active = Fixture.schedule(name: "Now", start: covering.start, end: covering.end)
+        let profile = Fixture.profile(schedules: [active], restrictWebToAllowlist: true)
+
+        ScheduleManager.suspendActiveSchedules(for: 3600, profiles: [profile])
+        XCTAssertTrue(isCleared(active))
+
+        ScheduleManager.endSuspension(profiles: [profile])
+
+        XCTAssertTrue(isShielded(active))
+    }
+
     func testEmergencyUnblockSpendsOneAndSuspends() {
         XCTAssertTrue(ScheduleManager.useEmergencyUnblock(profiles: [Fixture.profile()]))
 

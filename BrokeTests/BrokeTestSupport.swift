@@ -83,6 +83,7 @@ final class ShieldTargetRegistry {
 final class RecordingActivityCenter: ActivityRegistering {
     private(set) var stopCount = 0
     private(set) var startedActivities: [String] = []
+    private(set) var startedEvents: [String: [DeviceActivityEvent.Name: DeviceActivityEvent]] = [:]
 
     func stopMonitoring(_ activities: [DeviceActivityName]) {
         stopCount += 1
@@ -94,6 +95,13 @@ final class RecordingActivityCenter: ActivityRegistering {
         events: [DeviceActivityEvent.Name: DeviceActivityEvent]
     ) throws {
         startedActivities.append(activity.rawValue)
+        startedEvents[activity.rawValue] = events
+    }
+
+    /// The minutes of use a schedule's registered daily limit allows, which is the
+    /// limit itself plus any credit a suspension carries.
+    func thresholdMinutes(for schedule: Schedule) -> Int? {
+        startedEvents[schedule.budgetActivityName.rawValue]?[schedule.budgetEventName]?.threshold.minute
     }
 }
 
@@ -205,6 +213,9 @@ enum StoreKey {
     static let isBlocking = "isBlocking"
     static let emergencyUsedDate = "emergencyUnblocksUsedDateKey"
     static let emergencyUsedCount = "emergencyUnblocksUsedCountKey"
+
+    static let budgetCreditDate = "budgetCreditDate"
+    static let budgetCreditSeconds = "budgetCreditSeconds"
 
     static func budgetSpent(_ id: UUID) -> String {
         "budgetSpentDate-\(id.uuidString)"

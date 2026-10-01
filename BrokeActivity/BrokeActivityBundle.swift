@@ -14,14 +14,32 @@ struct BrokeActivityBundle: WidgetBundle {
     }
 }
 
+/// A bounded countdown, not an open-ended one from a date: `Text(_:style:.timer)`
+/// counts upwards once the date passes, and nothing redraws the card to stop it.
+struct SuspensionCountdown: View {
+    let state: SuspensionActivityAttributes.ContentState
+    let isStale: Bool
+
+    var body: some View {
+        if isStale {
+            Text("0:00")
+                .monospacedDigit()
+        } else {
+            Text(timerInterval: state.countdownRange, countsDown: true)
+                .monospacedDigit()
+                .multilineTextAlignment(.trailing)
+        }
+    }
+}
+
 struct SuspensionActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: SuspensionActivityAttributes.self) { context in
             HStack(spacing: 12) {
-                Image(systemName: "lock.open.fill")
+                Image(systemName: context.isStale ? "lock.fill" : "lock.open.fill")
                     .font(.title3)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Blocking paused")
+                    Text(context.isStale ? "Blocking resumed" : "Blocking paused")
                         .font(.headline)
                     Text(context.state.detail)
                         .font(.caption)
@@ -29,11 +47,9 @@ struct SuspensionActivityWidget: Widget {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text(context.state.resumesAt, style: .timer)
+                    SuspensionCountdown(state: context.state, isStale: context.isStale)
                         .font(.headline)
-                        .monospacedDigit()
-                        .multilineTextAlignment(.trailing)
-                    Text("until it resumes")
+                    Text(context.isStale ? "blocking is back on" : "until it resumes")
                         .font(.caption2)
                         .opacity(0.7)
                 }
@@ -43,18 +59,16 @@ struct SuspensionActivityWidget: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Image(systemName: "lock.open.fill")
+                    Image(systemName: context.isStale ? "lock.fill" : "lock.open.fill")
                         .padding(.leading, 4)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(context.state.resumesAt, style: .timer)
-                        .monospacedDigit()
-                        .multilineTextAlignment(.trailing)
+                    SuspensionCountdown(state: context.state, isStale: context.isStale)
                         .padding(.trailing, 4)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Blocking paused")
+                        Text(context.isStale ? "Blocking resumed" : "Blocking paused")
                             .font(.headline)
                         Text(context.state.detail)
                             .font(.caption)
@@ -63,13 +77,12 @@ struct SuspensionActivityWidget: Widget {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } compactLeading: {
-                Image(systemName: "lock.open.fill")
+                Image(systemName: context.isStale ? "lock.fill" : "lock.open.fill")
             } compactTrailing: {
-                Text(context.state.resumesAt, style: .timer)
-                    .monospacedDigit()
+                SuspensionCountdown(state: context.state, isStale: context.isStale)
                     .frame(maxWidth: 44)
             } minimal: {
-                Image(systemName: "lock.open.fill")
+                Image(systemName: context.isStale ? "lock.fill" : "lock.open.fill")
             }
         }
     }

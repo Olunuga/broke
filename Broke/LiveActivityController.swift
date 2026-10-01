@@ -23,14 +23,14 @@ enum LiveActivityController {
         }
 
         let state = SuspensionActivityAttributes.ContentState(
+            startedAt: SharedStore.suspendedFrom ?? Date(),
             resumesAt: resumesAt,
             detail: detail(for: profiles)
         )
         guard state != lastState else { return }
         lastState = state
 
-        // The activity outlives the app, which cannot end it from the background, so
-        // the stale date marks it spent at the moment blocking resumes.
+        // The stale date marks the content spent the moment blocking resumes, until the monitor extension ends the activity.
         let content = ActivityContent(state: state, staleDate: resumesAt)
         if let activity = Activity<SuspensionActivityAttributes>.activities.first {
             Task { await activity.update(content) }
@@ -51,6 +51,24 @@ enum LiveActivityController {
         for activity in Activity<SuspensionActivityAttributes>.activities {
             Task { await activity.end(nil, dismissalPolicy: .immediate) }
         }
+    }
+
+    /// `end()` for the monitor extension, which the system may terminate as soon as its
+    /// callback returns, before a detached task has run.
+    static func endAndWait(timeout: TimeInterval = 5) {
+        let activities = Activity<SuspensionActivityAttributes>.activities
+        guard !activities.isEmpty else { return }
+        lastState = nil
+
+        let finished = DispatchSemaphore(value: 0)
+        Task {
+            for activity in activities {
+                await activity.end(nil, dismissalPolicy: .immediate)
+            }
+            finished.signal()
+        }
+        _ = finished.wait(timeout: .now() + timeout)
+        BrokeLog.log("live activity ended, suspension over")
     }
 
     /// Names what resumes, which the suspension itself does not record.

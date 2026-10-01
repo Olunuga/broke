@@ -42,6 +42,8 @@
 		AC1000000000000000000600 /* SuspensionActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1000000000000000000100 /* SuspensionActivityAttributes.swift */; };
 		AC1000000000000000000700 /* LiveActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1000000000000000000200 /* LiveActivityController.swift */; };
 		AC1000000000000000000800 /* SuspensionActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1000000000000000000100 /* SuspensionActivityAttributes.swift */; };
+		AC1000000000000000003100 /* SuspensionActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1000000000000000000100 /* SuspensionActivityAttributes.swift */; };
+		AC1000000000000000003200 /* LiveActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1000000000000000000200 /* LiveActivityController.swift */; };
 		AC1000000000000000000900 /* BrokeActivityBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1000000000000000000300 /* BrokeActivityBundle.swift */; };
 		AC1000000000000000000A00 /* BrokeActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AC1000000000000000000500 /* BrokeActivity.appex */; settings = {ATTRIBUTES = (RemoveHeaderOnCopy, ); }; };
 		BC2000000000000000000200 /* BrokeTestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC2000000000000000000100 /* BrokeTestSupport.swift */; };
@@ -622,6 +624,8 @@
 				F351B60440616A6E2A082D41 /* SharedStore.swift in Sources */,
 				BDA7027BAF2E684A6DE07B3F /* ShieldWriter.swift in Sources */,
 				B3BA27672DD2F7C6DF6888A0 /* Profile.swift in Sources */,
+				AC1000000000000000003100 /* SuspensionActivityAttributes.swift in Sources */,
+				AC1000000000000000003200 /* LiveActivityController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

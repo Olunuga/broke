@@ -75,6 +75,63 @@ final class SharedStoreTests: BrokeTestCase {
         XCTAssertFalse(SharedStore.isBudgetSpent(for: UUID()))
     }
 
+    // MARK: - Suspension credit against the daily limit
+
+    func testNoCreditWithoutASuspension() {
+        XCTAssertEqual(SharedStore.budgetCreditMinutes, 0)
+    }
+
+    func testASuspensionCreditsItsWholeDuration() {
+        let now = Date()
+        SharedStore.creditBudget(forSuspensionUntil: now.addingTimeInterval(3600), now: now)
+
+        XCTAssertEqual(SharedStore.budgetCreditMinutes, 60)
+    }
+
+    func testSuspensionsAddUpAcrossTheDay() {
+        let now = Date()
+        SharedStore.creditBudget(forSuspensionUntil: now.addingTimeInterval(1800), now: now)
+        let later = now.addingTimeInterval(7200)
+        SharedStore.creditBudget(forSuspensionUntil: later.addingTimeInterval(1800), now: later)
+
+        XCTAssertEqual(SharedStore.budgetCreditMinutes, 60)
+    }
+
+    func testASecondScanCreditsOnlyTheTimeItAdds() {
+        let now = Date()
+        SharedStore.creditBudget(forSuspensionUntil: now.addingTimeInterval(3600), now: now)
+        let later = now.addingTimeInterval(600)
+        SharedStore.creditBudget(forSuspensionUntil: later.addingTimeInterval(3600), now: later)
+
+        XCTAssertEqual(SharedStore.budgetCreditMinutes, 70)
+    }
+
+    func testAnEarlyResumeHandsBackTheUnusedCredit() {
+        let now = Date()
+        SharedStore.creditBudget(forSuspensionUntil: now.addingTimeInterval(3600), now: now)
+        SharedStore.refundBudgetCredit(now: now.addingTimeInterval(600))
+
+        XCTAssertEqual(SharedStore.budgetCreditMinutes, 10)
+    }
+
+    func testAResumeAfterTheDeadlineTakesNothingBack() {
+        let now = Date()
+        SharedStore.creditBudget(forSuspensionUntil: now.addingTimeInterval(3600), now: now)
+        SharedStore.refundBudgetCredit(now: now.addingTimeInterval(7200))
+
+        XCTAssertEqual(SharedStore.budgetCreditMinutes, 60)
+    }
+
+    func testCreditAppliesOnlyToTheDayItWasStamped() {
+        let now = Date()
+        SharedStore.creditBudget(forSuspensionUntil: now.addingTimeInterval(3600), now: now)
+
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now)!
+        SharedStore.defaults.set(yesterday, forKey: StoreKey.budgetCreditDate)
+
+        XCTAssertEqual(SharedStore.budgetCreditMinutes, 0)
+    }
+
     // MARK: - Profile editing grant
 
     func testGrantOpensEditingAndRevokeClosesIt() {

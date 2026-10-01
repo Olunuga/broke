@@ -451,15 +451,14 @@ struct BrokerView: View {
     #if DEBUG
     /// A suspension short enough to watch the Live Activity start, count down, and end.
     private func startTestSuspension() {
-        ScheduleManager.suspendActiveSchedules(for: 10, profiles: profileManager.profiles)
+        ScheduleManager.suspendActiveSchedules(for: 60 * 15, profiles: profileManager.profiles)
         refreshScheduleBlockingState()
     }
     #endif
 
     private func resumeBlockingNow() {
         BrokeLog.log("user ended the suspension early")
-        SharedStore.clearSuspension()
-        ScheduleManager.sync(profiles: profileManager.profiles)
+        ScheduleManager.endSuspension(profiles: profileManager.profiles)
         refreshScheduleBlockingState()
     }
     

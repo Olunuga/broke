@@ -35,6 +35,7 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
             // every schedule is re-evaluated here rather than just the one that was
             // suspended.
             reapplyAllKnownSchedules()
+            LiveActivityController.endAndWait()
         } else if let (profile, schedule) = SharedStore.schedule(forBudgetActivity: activity) {
             apply(schedule, profile: profile)
         } else {
@@ -48,17 +49,17 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
         BrokeLog.log("eventDidReachThreshold: event=\(event.rawValue) activity=\(activity.rawValue) suspended=\(SharedStore.isSuspended)")
 
         guard let (profile, schedule) = SharedStore.schedule(forBudgetActivity: activity),
-              event == schedule.budgetEventName,
-              !SharedStore.isSuspended else {
+              event == schedule.budgetEventName else {
             return
         }
 
         BrokeLog.log("daily limit spent for '\(schedule.name)', enforcing today=\(schedule.isActiveToday())")
+        // Recorded even while suspended: an event fires once per interval, so dropping the hit would leave the limit unenforced all day.
         SharedStore.setBudgetSpent(true, for: schedule.id)
         // Only enforce if today is actually one of this schedule's days — the
         // tracker runs daily regardless of `weekdays`, since DeviceActivitySchedule
         // has no weekday parameter to filter it by.
-        if schedule.isActiveToday() {
+        if schedule.isActiveToday(), !SharedStore.isSuspended {
             ShieldWriter.apply(profile, to: ManagedSettingsStore(named: schedule.storeName))
         }
         HardeningManager.refresh()

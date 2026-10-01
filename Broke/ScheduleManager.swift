@@ -107,7 +107,17 @@ enum ScheduleManager {
     /// arranges for it to resume automatically when the suspension ends.
     static func suspendActiveSchedules(for duration: TimeInterval, profiles: [Profile]) {
         BrokeLog.log("suspending schedules for \(Int(duration / 60)) minutes")
-        SharedStore.beginSuspension(until: Date().addingTimeInterval(duration))
+        let deadline = Date().addingTimeInterval(duration)
+        SharedStore.creditBudget(forSuspensionUntil: deadline)
+        SharedStore.beginSuspension(until: deadline)
+        sync(profiles: profiles)
+    }
+
+    /// Ends a running suspension now, handing back the credit the unused remainder
+    /// carried.
+    static func endSuspension(profiles: [Profile]) {
+        SharedStore.refundBudgetCredit()
+        SharedStore.clearSuspension()
         sync(profiles: profiles)
     }
 
@@ -153,11 +163,13 @@ enum ScheduleManager {
             intervalEnd: DateComponents(hour: 23, minute: 59),
             repeats: true
         )
-        let events = [schedule.budgetEventName: budgetEvent(minutes: budgetMinutes, profile: profile)]
+        // A suspension unshields the profile, so the system counts that span as use: the threshold carries it as credit instead.
+        let credit = SharedStore.budgetCreditMinutes
+        let events = [schedule.budgetEventName: budgetEvent(minutes: budgetMinutes + credit, profile: profile)]
 
         do {
             try center.startMonitoring(schedule.budgetActivityName, during: allDay, events: events)
-            BrokeLog.log("budget monitoring registered for '\(schedule.name)' budget=\(budgetMinutes)min")
+            BrokeLog.log("budget monitoring registered for '\(schedule.name)' budget=\(budgetMinutes)min suspensionCredit=\(credit)min")
         } catch {
             BrokeLog.log("budget monitoring FAILED for '\(schedule.name)': \(error)")
         }

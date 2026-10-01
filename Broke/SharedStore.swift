@@ -37,6 +37,10 @@ enum SharedStore {
         static let currentProfileId = "currentProfileId"
         static let isBlocking = "isBlocking"
         static let suspendedUntil = "suspendedUntil"
+        static let suspendedFrom = "suspendedFrom"
+        static let budgetCreditSeconds = "budgetCreditSeconds"
+        static let budgetCreditDate = "budgetCreditDate"
+        static let budgetCreditedUntil = "budgetCreditedUntil"
         static let didMigrateFromStandardDefaults = "didMigrateFromStandardDefaults"
         static let knownScheduleIds = "knownScheduleIds"
         static let emergencyUnblocksUsedDate = "emergencyUnblocksUsedDateKey"
@@ -134,12 +138,19 @@ enum SharedStore {
         defaults.object(forKey: Key.suspendedUntil) as? Date
     }
 
+    /// When the running suspension began. The Live Activity needs a span, not only a deadline, to draw a countdown that stops at zero.
+    static var suspendedFrom: Date? {
+        defaults.object(forKey: Key.suspendedFrom) as? Date
+    }
+
     static func beginSuspension(until date: Date) {
+        defaults.set(Date(), forKey: Key.suspendedFrom)
         defaults.set(date, forKey: Key.suspendedUntil)
     }
 
     static func clearSuspension() {
         defaults.removeObject(forKey: Key.suspendedUntil)
+        defaults.removeObject(forKey: Key.suspendedFrom)
     }
 
     /// Emergency unblocks taken this calendar month. One stored date plus a count is
@@ -204,6 +215,52 @@ enum SharedStore {
 
     private static func budgetSpentKey(_ scheduleId: UUID) -> String {
         "budgetSpentDate-\(scheduleId.uuidString)"
+    }
+
+    // MARK: - Daily limit credit for suspensions
+
+    /// Minutes of today a suspension covers. The system counts app usage whenever the
+    /// profile is unshielded, and a suspension unshields it, so the daily limit would
+    /// otherwise spend itself on time the tag already paid for. The limit's threshold
+    /// is raised by this amount. Date-stamped, so it expires at midnight on its own.
+    /// Rounded rather than truncated: the span is measured against a clock read a
+    /// moment after the deadline was built, and truncating would drop its last minute.
+    static var budgetCreditMinutes: Int {
+        Int((budgetCreditSeconds / 60).rounded())
+    }
+
+    private static var budgetCreditSeconds: TimeInterval {
+        guard let date = defaults.object(forKey: Key.budgetCreditDate) as? Date,
+              Calendar.current.isDateInToday(date) else { return 0 }
+        return defaults.double(forKey: Key.budgetCreditSeconds)
+    }
+
+    /// The moment up to which credit is already given, so a scan made during a
+    /// suspension extends the credit rather than granting the full duration twice.
+    private static var budgetCreditedUntil: Date? {
+        defaults.object(forKey: Key.budgetCreditedUntil) as? Date
+    }
+
+    /// Credits a suspension that runs to `deadline`, in full and in advance: the
+    /// suspension usually ends with the app closed, where nothing can register the
+    /// time after the fact.
+    static func creditBudget(forSuspensionUntil deadline: Date, now: Date = Date()) {
+        let from = max(now, budgetCreditedUntil ?? now)
+        guard deadline > from else { return }
+        addBudgetCredit(deadline.timeIntervalSince(from), now: now)
+        defaults.set(deadline, forKey: Key.budgetCreditedUntil)
+    }
+
+    /// Takes back the part of a credited suspension that an early resume cut off.
+    static func refundBudgetCredit(now: Date = Date()) {
+        guard let creditedUntil = budgetCreditedUntil, creditedUntil > now else { return }
+        addBudgetCredit(-creditedUntil.timeIntervalSince(now), now: now)
+        defaults.set(now, forKey: Key.budgetCreditedUntil)
+    }
+
+    private static func addBudgetCredit(_ seconds: TimeInterval, now: Date) {
+        defaults.set(max(0, budgetCreditSeconds + seconds), forKey: Key.budgetCreditSeconds)
+        defaults.set(now, forKey: Key.budgetCreditDate)
     }
 
     static func isAnyScheduleBlocking() -> Bool {

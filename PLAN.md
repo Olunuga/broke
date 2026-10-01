@@ -17,7 +17,9 @@ filters by weekday inside `intervalDidStart`.
 - **One all-day budget activity per schedule with a daily limit**, named
 `"<scheduleId>-budget"`, in both modes. Usage only accrues while the profile is
 unshielded, which is exactly the span each mode's limit caps: under `.block` the time
-outside every window, under `.allow` the time inside them. All-day rather than
+outside every window, under `.allow` the time inside them. A suspension unshields the
+profile too, so its span is added to the event's threshold as credit rather than spent
+from the limit; see phase 6. All-day rather than
 per-window, so one limit covers the whole day however many windows there are, and
 `weekdays` is checked when the threshold fires rather than by the interval.
 - **Activity count is windows plus one per schedule with a limit** — well below the
@@ -207,7 +209,10 @@ Window transitions work at the end of this phase.
   extension-side agree.
 - [x] `eventDidReachThreshold` sets the flag and applies the schedule's shield, for both
 
-  modes, behind the `isActiveToday()` guard.
+  modes, behind the `isActiveToday()` and `isSuspended` guards. The flag is set even
+  while suspended, since an event fires once per interval: dropping the hit would leave
+  the limit unenforced for the rest of the day. The shield waits for the resume
+  callback instead.
 - [ ] **you** Test the Wednesday-to-Saturday, 30-minute `.allow` case
 - [ ] **you** Test a `.block` schedule with a daily limit: use up the limit before the
 
@@ -240,6 +245,20 @@ it suspends every schedule for `SharedStore.suspensionDuration` (30 minutes) via
 immediately clears the currently-blocking schedules' shields through `sync`. A tag scan
 while nothing is schedule-blocking falls through to the pre-existing manual toggle,
 unchanged.
+
+A suspension does not spend a daily limit. The system counts use whenever the profile is
+unshielded, and a suspension unshields it, so the whole suspended span is credited in
+`SharedStore.creditBudget(forSuspensionUntil:)` and `sync` registers each budget event
+with `budgetMinutes + budgetCreditMinutes`. The credit is given in advance, at the scan,
+because the suspension usually ends with the app closed, where nothing can add the time
+after the fact; `ScheduleManager.endSuspension` hands back the unused remainder when the
+user resumes early. The credit is date-stamped and expires at midnight, like the
+spent-limit flag.
+
+The Lock Screen shows the suspension through `LiveActivityController`. Its countdown is
+drawn over the `startedAt...resumesAt` span rather than from the deadline alone, which
+is what stops it at zero, and the resume wake-up calls `endAndWait()` to take the card
+away from the background extension.
 
 Five 15-minute emergency unblocks per calendar month are available without a tag, from
 a button on the blocked screen showing how many remain
@@ -425,6 +444,11 @@ permitting.
 - Extension callbacks arrive within a few minutes of the boundary, not at the exact
 second. A 30-minute budget can overrun slightly.
 - `DeviceActivityCenter` rejects intervals under 15 minutes with `intervalTooShort`.
+- A suspension is credited against the daily limit of the day it starts on. One that
+runs past midnight leaves its minutes after midnight to come out of the next day's
+limit.
+- A suspension is credited in full whether or not the profile is used during it, so a
+scan made and not acted on still enlarges that day's limit.
 - A window that crosses midnight must be split into two windows.
 - Extension callbacks do not fire in the simulator.
 - `ApplicationToken`, `ActivityCategoryToken`, and `WebDomainToken` are opaque values
